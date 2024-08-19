@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "lolla"
+version = "0.1.0"
+description = "Generate a schedule for Lollapalooza"
+authors = ["Thomas Richards <thomas.c.richards@outlook.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.2.2"
+PuLP = "^2.9.0"
+scipy = "^1.14.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
