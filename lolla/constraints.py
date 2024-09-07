@@ -20,6 +20,7 @@ class ScheduleConflict:
         self.artist1 = artist1
         self.hour1 = hour1
         self.stage1 = stage1
+
         self.artist2 = artist2
         self.hour2 = hour2
         self.stage2 = stage2
@@ -28,11 +29,11 @@ class ScheduleConflict:
         return f"Conflict between {self.artist1} at {self.hour1} on {self.stage1} and {self.artist2} at {self.hour2} on {self.stage2}"
 
 
-def is_schedule_valid(schedule_df: pd.DataFrame):
-    return not (
-        is_any_stage_booked_consecutively(schedule_df)
-        or are_any_neighbors_simultaneous(schedule_df)
-    )
+def get_schedule_conflict(schedule_df: pd.DataFrame) -> Optional[ScheduleConflict]:
+    consecutively = is_any_stage_booked_consecutively(schedule_df)
+    simultaneously = are_any_neighbors_simultaneous(schedule_df)
+
+    return consecutively or simultaneously
 
 
 def is_any_stage_booked_consecutively(
@@ -66,4 +67,4 @@ def are_any_neighbors_simultaneous(
     Each identifier is an hour and stage
     """
     print("Checking if any neighboring stages are playing at the same time...")
-    return False
+    return None

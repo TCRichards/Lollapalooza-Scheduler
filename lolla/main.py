@@ -9,25 +9,26 @@
   (e.g. the first hour usually only has small, the middle has a combination of all, the end is mostly large)
 """
 
+import random
+
 import numpy as np
 import pandas as pd
 import pandera as pa
 
 from lolla.constants import ArtistSize, STAGES, HOURS, schedule_schema
-from lolla.constraints import is_schedule_valid
+from lolla.constraints import get_schedule_conflict, ScheduleConflict
 
 
 def main():
     print("=" * 55 + "\nGenerating Lollapalooza Schedule\n" + "=" * 55)
-    schedule_df = generate_initial_schedule()
-    display_schedule(schedule_df)
+    schedule_df = generate_valid_schedule()
+    print(f"Valid Schedule:\n{schedule_df}")
 
-    is_valid = is_schedule_valid(schedule_df)
-    
-    if is_valid:
-        print("The schedule is valid.")
-    if not is_valid:
-        print("The schedule is invalid.")
+
+def generate_valid_schedule() -> pd.DataFrame:
+    schedule_df = generate_initial_schedule()
+    print(f"Initial schedule:\n{schedule_df}")
+    return fix_schedule_conflicts(schedule_df)
 
 
 @pa.check_types
@@ -48,6 +49,34 @@ def generate_initial_schedule() -> pd.DataFrame:
                 schedule_df.at[hour, stage] = ArtistSize.LARGE.name
 
     return schedule_schema.validate(schedule_df)
+
+
+def fix_schedule_conflicts(schedule_df: pd.DataFrame) -> pd.DataFrame:
+    conflict = get_schedule_conflict(schedule_df)
+    while conflict is not None:
+        schedule_df = swap_slots(schedule_df, conflict)
+        conflict = get_schedule_conflict(schedule_df)
+
+    print("No conflicts remaining")
+    return schedule_df
+
+
+def swap_slots(schedule_df: pd.DataFrame, conflict: ScheduleConflict):
+    print(f"Swapping slots due to {conflict}")
+    # Swap one of the conflicting artists with a random slot
+    stage1 = conflict.stage1
+    artist1 = conflict.artist1
+    hour1 = conflict.hour1
+
+    stage2 = random.choice(STAGES)
+    hour2 = random.choice(HOURS)
+    artist2 = schedule_df.at[hour2, stage2]
+
+    print(f"Swapping {artist1} at {hour1} on {stage1} with {artist2} at {hour2} on {stage2}...")
+    schedule_df.at[hour1, stage1] = artist2
+    schedule_df.at[hour2, stage2] = artist1
+
+    return schedule_df
 
 
 def display_schedule(schedule_df: pd.DataFrame):
