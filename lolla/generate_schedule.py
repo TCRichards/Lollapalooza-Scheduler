@@ -18,9 +18,16 @@ from lolla.constraints import is_schedule_valid
 
 
 def main():
+    print("=" * 55 + "\nGenerating Lollapalooza Schedule\n" + "=" * 55)
     schedule_df = generate_initial_schedule()
     display_schedule(schedule_df)
-    print("Is the schedule valid?", is_schedule_valid(schedule_df))
+
+    is_valid = is_schedule_valid(schedule_df)
+    
+    if is_valid:
+        print("The schedule is valid.")
+    if not is_valid:
+        print("The schedule is invalid.")
 
 
 @pa.check_types
@@ -33,18 +40,18 @@ def generate_initial_schedule() -> pd.DataFrame:
     ):  # # This is super slow if it matters - applymap is a harder to read alternative
         for stage in STAGES:
             rand = np.random.rand()
-            if rand < 0.2:
+            if rand < 0.1:
                 schedule_df.at[hour, stage] = ArtistSize.SMALL.name
-            elif rand < 0.4:
+            elif rand < 0.2:
                 schedule_df.at[hour, stage] = ArtistSize.MEDIUM.name
-            elif rand < 0.6:
+            elif rand < 0.3:
                 schedule_df.at[hour, stage] = ArtistSize.LARGE.name
 
     return schedule_schema.validate(schedule_df)
 
 
 def display_schedule(schedule_df: pd.DataFrame):
-    print(schedule_df)
+    print(f"Schedule:\n{schedule_df}")
 
 
 if __name__ == "__main__":
