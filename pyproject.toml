@@ -10,6 +10,7 @@ python = "^3.10"
 pandas = "^2.2.2"
 PuLP = "^2.9.0"
 scipy = "^1.14.0"
+pandera = "^0.20.4"
 
 
 [build-system]
