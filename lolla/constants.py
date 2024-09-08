@@ -1,23 +1,18 @@
-from enum import Enum
-
 import numpy as np
-import pandera as pa
 
 
 STAGES = ["Bud Light", "Tito's", "Bacardi", "BMI", "Perry's", "IHG", "T-Mobile"]
-STAGE_TO_ID = {stage: i for i, stage in enumerate(STAGES)}
 HOURS = np.arange(12, 23, 1)
 
 
-class ArtistSize(Enum):
-    SMALL = 1
-    MEDIUM = 2
-    LARGE = 3
+# Represents stages that can't play at the same time
+NEIGHBORS = {
+    "Bud Light": "Tito's",
+    "IHG": "T-Mobile",
+}
 
-
-schedule_schema = pa.DataFrameSchema(
-    index=pa.Index(pa.Int, name="hour", checks=pa.Check.in_range(HOURS[0], HOURS[-1])),
-    columns={
-        **{stage: pa.Column(pa.String, nullable=True) for stage in STAGES},
-    }
-)
+# Add the reverse mapping and map stages without neighbords to None
+NEIGHBORS |= {v: k for k, v in NEIGHBORS.items()}
+for stage in STAGES:
+    if stage not in NEIGHBORS:
+        NEIGHBORS[stage] = None
