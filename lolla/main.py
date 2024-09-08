@@ -13,7 +13,6 @@ import random
 
 import numpy as np
 import pandas as pd
-import pandera as pa
 
 from lolla.constants import ArtistSize, STAGES, HOURS, schedule_schema
 from lolla.constraints import get_schedule_conflict, ScheduleConflict
@@ -31,22 +30,36 @@ def generate_valid_schedule() -> pd.DataFrame:
     return fix_schedule_conflicts(schedule_df)
 
 
-@pa.check_types
 def generate_initial_schedule() -> pd.DataFrame:
     schedule_df = pd.DataFrame(columns=STAGES, index=HOURS, data={})
     schedule_df.index.name = "hour"
 
-    for hour in (
-        HOURS
-    ):  # # This is super slow if it matters - applymap is a harder to read alternative
-        for stage in STAGES:
-            rand = np.random.rand()
-            if rand < 0.1:
-                schedule_df.at[hour, stage] = ArtistSize.SMALL.name
-            elif rand < 0.2:
-                schedule_df.at[hour, stage] = ArtistSize.MEDIUM.name
-            elif rand < 0.3:
-                schedule_df.at[hour, stage] = ArtistSize.LARGE.name
+    # This decision can significantly impact the game, so make it tunable
+    total_slots = len(STAGES) * len(HOURS)
+
+    EVENT_FREQUENCY = 0.4  # What stage/hour slots are filled
+    SMALL_ARTIST_FREQUENCY = 0.45
+    MEDIUM_ARTIST_FREQUENCY = 0.35
+    LARGE_ARTIST_FRQUENCY = 0.2 
+    assert (
+         SMALL_ARTIST_FREQUENCY + LARGE_ARTIST_FRQUENCY + MEDIUM_ARTIST_FREQUENCY == 1
+    ), "Artist frequencies must sum to 1"
+
+    num_small_artists = total_slots * EVENT_FREQUENCY * SMALL_ARTIST_FREQUENCY
+    num_medium_artists = total_slots * EVENT_FREQUENCY * MEDIUM_ARTIST_FREQUENCY
+    num_large_artists = total_slots * EVENT_FREQUENCY * LARGE_ARTIST_FRQUENCY
+    artist_to_num = {
+        ArtistSize.SMALL: num_small_artists,
+        ArtistSize.MEDIUM: num_medium_artists,
+        ArtistSize.LARGE: num_large_artists
+    }
+
+    for artist_size, artist_count in artist_to_num.items():
+        while artist_count > 0:
+            hour = random.choice(HOURS)
+            stage = random.choice(STAGES)
+            schedule_df.at[hour, stage] = artist_size.name
+            artist_count -= 1
 
     return schedule_schema.validate(schedule_df)
 
@@ -72,7 +85,9 @@ def swap_slots(schedule_df: pd.DataFrame, conflict: ScheduleConflict):
     hour2 = random.choice(HOURS)
     artist2 = schedule_df.at[hour2, stage2]
 
-    print(f"Swapping {artist1} at {hour1} on {stage1} with {artist2} at {hour2} on {stage2}...")
+    print(
+        f"Swapping {artist1} at {hour1} on {stage1} with {artist2} at {hour2} on {stage2}..."
+    )
     schedule_df.at[hour1, stage1] = artist2
     schedule_df.at[hour2, stage2] = artist1
 
