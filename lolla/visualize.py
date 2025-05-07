@@ -7,18 +7,18 @@ from lolla.constants import STAGES
 
 
 def display_schedule(schedule_df: pd.DataFrame) -> None:
-    """
-    Display the schedule using Plotly.
-    """
+    """Display the schedule using a Plotly figure."""
     fig = get_schedule_plotly_figure(schedule_df)
     fig.show()
 
 
 def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
+    """Generate a Plotly figure for the schedule."""
     # Take out nulls, and convert index to 12-hour format
     schedule_df = schedule_df.fillna("")
     schedule_df.index = pd.Series(schedule_df.index).apply(lambda x: f"{x % 12 if x > 12 else x}:00")
 
+    # Generate the figure
     fig = go.Figure(
         data=[
             go.Table(
@@ -41,6 +41,7 @@ def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
         ]
     )
 
+    # Add a background image
     background_image_path = (
         Path(__file__).parent.parent / "resources" / "schedule_background.png"
     )
@@ -61,6 +62,7 @@ def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
         )
     )
 
+    # Set the layout
     fig.update_layout(
         autosize=True,
         margin=dict(l=0, r=3, t=0, b=0),
