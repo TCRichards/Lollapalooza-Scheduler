@@ -1,10 +1,11 @@
 import base64
 from pathlib import Path
 import pandas as pd
+from pandas._libs.missing import NAType
 import plotly.graph_objects as go
 
 from lolla.constants import STAGES
-from lolla.artists import Artist, ArtistSize
+from lolla.artists import Artist, ArtistSize, Genre
 
 
 def display_schedule(schedule_df: pd.DataFrame) -> None:
@@ -12,10 +13,17 @@ def display_schedule(schedule_df: pd.DataFrame) -> None:
     fig = get_schedule_plotly_figure(schedule_df)
     fig.show()
 
+    
+    
+
 
 def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
     display_df = schedule_df.copy()
     display_df.index = pd.Series(display_df.index).apply(lambda x: f"{x % 12 if x > 12 else x}:00")
+
+    # Convert the artist objects to a string representation
+    for stage in STAGES:
+        display_df[stage] = display_df[stage].apply(artist_to_display)
 
     # Build cell background colors by artist size
     # Transparent for empty, blue for small, green for medium, red for large
@@ -37,14 +45,6 @@ def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
             else:
                 col_colors.append("rgba(0,0,0,0)")
         cell_colors.append(col_colors)
-
-    display_df.index = display_df.index.astype(str)
-
-    # For each artist, replace it in the table with artist.display_name()
-    for stage in STAGES:
-        display_df[stage] = display_df[stage].apply(
-            lambda artist: artist.display_name() if isinstance(artist, Artist) else ""
-        )
 
     fig = go.Figure(
         data=[
@@ -104,6 +104,18 @@ def add_background_image(fig: go.Figure) -> go.Figure:
     )
 
 
+def artist_to_display(artist: Artist | NAType) -> str:
+    if pd.isna(artist):
+        return ""
+    
+    ICONS = {
+        Genre.INDIE: "🎸",
+        Genre.POP:   "🎤",
+        Genre.EDM:   "🎧",
+        Genre.RAP:   "🔥",
+    }
+
+    return f"{ICONS[artist.genre]} {artist.name}<br>{artist.size.name.title()}<br>{artist.genre.name.title()}"
 
 if __name__ == "__main__":
     schedule_path = Path(__file__).parent.parent / "schedules" / "schedule.csv"
