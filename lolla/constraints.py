@@ -1,8 +1,10 @@
+"""Constraints on the schedule that must be satisfied."""
+
 from typing import Optional
 
 import pandas as pd
 
-from lolla.constants import NEIGHBORS
+from collections import defaultdict
 from lolla.wrappers import ScheduleConflict, Concert, ArtistSize
 from lolla import params
 
@@ -55,6 +57,15 @@ def is_neighbor_booked_simultaneously(
 
     Each identifier is an hour and stage
     """
+    # Represents stages that can't play at the same time
+    NEIGHBORS = defaultdict(lambda: None, {
+        "Bud Light": "Tito's",
+        "IHG": "T-Mobile",
+    })
+
+    # Add the reverse mapping and map stages without neighbords to None
+    NEIGHBORS |= {v: k for k, v in NEIGHBORS.items()}
+
     this_hour_artist = schedule_df.loc[hour, stage]
     if pd.isna(this_hour_artist) or not NEIGHBORS[stage]:
         return
@@ -106,13 +117,12 @@ def is_size_window_violated(
         **{h: {ArtistSize.LARGE} for h in range(22, 23)},
     }
 
-    val = schedule_df.loc[hour, stage]
-    if pd.isna(val):
+    scheduled_artist = schedule_df.loc[hour, stage]
+    if pd.isna(scheduled_artist):
         return
 
-    size = ArtistSize[val]
-    if size not in ALLOWED_SIZES[hour]:
+    if scheduled_artist.size not in ALLOWED_SIZES[hour]:
         return ScheduleConflict(
-            Concert(val, stage, hour),
-            Concert(val, stage, hour),
+            Concert(scheduled_artist, stage, hour),
+            Concert(scheduled_artist, stage, hour),
         )

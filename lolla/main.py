@@ -17,6 +17,7 @@ from lolla.constraints import (
 )
 from lolla import params
 from lolla.visualize import display_schedule
+from lolla.artists import get_random_artist_of_size
 
 
 
@@ -28,6 +29,7 @@ def generate_valid_schedule() -> pd.DataFrame:
 
 
 def generate_initial_schedule() -> pd.DataFrame:
+    """Generate an initial schedule DataFrame with Artist objects assigned to stages and hours."""
     schedule_df = pd.DataFrame(columns=STAGES, index=HOURS, data={})
     schedule_df.index.name = "hour"
 
@@ -51,7 +53,7 @@ def generate_initial_schedule() -> pd.DataFrame:
         while artist_count > 0:
             hour = random.choice(HOURS)
             stage = random.choice(STAGES)
-            schedule_df.loc[hour, stage] = artist_size.name
+            schedule_df.loc[hour, stage] = get_random_artist_of_size(artist_size)
             artist_count -= 1
 
     schedule_schema = pa.DataFrameSchema(
@@ -59,7 +61,7 @@ def generate_initial_schedule() -> pd.DataFrame:
             pa.Int, name="hour", checks=pa.Check.in_range(HOURS[0], HOURS[-1])
         ),
         columns={
-            **{stage: pa.Column(pa.String, nullable=True) for stage in STAGES},
+            **{stage: pa.Column(object, nullable=True) for stage in STAGES},
         },
     )
 

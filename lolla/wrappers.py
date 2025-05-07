@@ -1,12 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
-
-class ArtistSize(Enum):
-    SMALL = 1
-    MEDIUM = 2
-    LARGE = 3
-
+from lolla.artists import ArtistSize
 
 class Concert:
     def __init__(self, artist: ArtistSize, stage: str, hour: int):

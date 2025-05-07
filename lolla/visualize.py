@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from lolla.constants import STAGES
+from lolla.artists import Artist
 
 
 def display_schedule(schedule_df: pd.DataFrame) -> None:
@@ -14,9 +15,12 @@ def display_schedule(schedule_df: pd.DataFrame) -> None:
 
 def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
     """Generate a Plotly figure for the schedule."""
+    # Convert Artist objects to their repr for display
+    display_df = schedule_df.applymap(lambda x: repr(x) if isinstance(x, Artist) else "")
+
     # Take out nulls, and convert index to 12-hour format
-    schedule_df = schedule_df.fillna("")
-    schedule_df.index = pd.Series(schedule_df.index).apply(lambda x: f"{x % 12 if x > 12 else x}:00")
+    display_df = display_df.fillna("")
+    display_df.index = pd.Series(display_df.index).apply(lambda x: f"{x % 12 if x > 12 else x}:00")
 
     # Generate the figure
     fig = go.Figure(
@@ -30,8 +34,8 @@ def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
                     font=dict(color="black", size=20),
                 ),
                 cells=dict(
-                    values=[schedule_df.index.tolist()]
-                    + [schedule_df[col].tolist() for col in STAGES],
+                    values=[display_df.index.tolist()]
+                    + [display_df[col].tolist() for col in STAGES],
                     fill_color="rgba(0,0,0,0)",
                     align="center",
                     font=dict(color="black", size=16),
