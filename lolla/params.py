@@ -3,7 +3,7 @@
 Mostly optimized by playtesting.
 """
 # What portion of stage/hour slots are filled
-EVENT_FREQUENCY = 0.55
+EVENT_FREQUENCY = 0.6
 
 # The relative frequency of each size of artist
 SMALL_ARTIST_FREQUENCY = 0.45

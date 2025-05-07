@@ -1,3 +1,4 @@
+from collections import defaultdict
 import numpy as np
 
 
@@ -6,13 +7,10 @@ HOURS = np.arange(12, 23, 1)
 
 
 # Represents stages that can't play at the same time
-NEIGHBORS = {
+NEIGHBORS = defaultdict(lambda: None, {
     "Bud Light": "Tito's",
     "IHG": "T-Mobile",
-}
+})
 
 # Add the reverse mapping and map stages without neighbords to None
 NEIGHBORS |= {v: k for k, v in NEIGHBORS.items()}
-for stage in STAGES:
-    if stage not in NEIGHBORS:
-        NEIGHBORS[stage] = None

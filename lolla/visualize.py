@@ -1,84 +1,76 @@
+import base64
 from pathlib import Path
 import pandas as pd
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 
-from lolla.constants import STAGES, HOURS
-from PIL import Image, ImageDraw, ImageFont
+from lolla.constants import STAGES
 
 
-def display_schedule_plotly(schedule_df):
+def display_schedule(schedule_df: pd.DataFrame) -> None:
+    """
+    Display the schedule using Plotly.
+    """
+    fig = get_schedule_plotly_figure(schedule_df)
+    fig.show()
+
+
+def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
+    schedule_df = schedule_df.fillna("")
+    schedule_df.index = pd.Series(schedule_df.index).apply(lambda x: f"{x % 12 if x > 12 else x}:00")
     fig = go.Figure(
         data=[
             go.Table(
+                domain=dict(x=[0, 1], y=[0, 0.80]),
                 header=dict(
-                    values=["Hour"] + STAGES, fill_color="lightblue", align="center"
+                    values=["Hour"] + STAGES,
+                    fill_color="rgba(211,237,228,0.8)",
+                    align="center",
+                    font=dict(color="black", size=16),
                 ),
                 cells=dict(
                     values=[schedule_df.index.tolist()]
                     + [schedule_df[col].tolist() for col in STAGES],
-                    fill_color="white",
+                    fill_color="rgba(0,0,0,0)",
                     align="center",
+                    font=dict(color="black", size=12),
                 ),
             )
         ]
     )
+
+    background_image_path = (
+        Path(__file__).parent.parent / "resources" / "schedule_background.png"
+    )
+    with open(background_image_path, "rb") as f:
+        img_bytes = f.read()
+    img_b64 = base64.b64encode(img_bytes).decode()
+    fig.add_layout_image(
+        dict(
+            source="data:image/png;base64," + img_b64,
+            xref="paper",
+            yref="paper",
+            x=0,
+            y=1,  # position top-left corner
+            sizex=1,
+            sizey=1,  # span full width & height
+            sizing="stretch",  # stretch to fill
+            layer="below",  # render beneath the table
+        )
+    )
+
     fig.update_layout(
-        width=900, height=600, title_text="LollaPalooza Schedule (Plotly)"
+        autosize=True,
+        margin=dict(l=0, r=0, t=0, b=0),
+        width=850,
+        height=1100,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
     )
-    fig.show()
 
-
-def display_schedule_matplotlib(schedule_df):
-    fig, ax = plt.subplots(figsize=(12, 7))
-    ax.axis("off")
-    tbl = ax.table(
-        cellText=[
-            [schedule_df.loc[h, col] for col in schedule_df.columns]
-            for h in schedule_df.index
-        ],
-        rowLabels=schedule_df.index,
-        colLabels=schedule_df.columns,
-        cellLoc="center",
-        loc="center",
-    )
-    tbl.auto_set_font_size(False)
-    tbl.set_fontsize(12)
-    tbl.scale(1, 2)
-    plt.title("LollaPalooza Schedule (Matplotlib)")
-    plt.show()
-
-def display_schedule_pil(schedule_df):
-    cell_w, cell_h = 120, 40
-    cols = len(STAGES) + 1
-    rows = len(HOURS) + 1
-    img_w, img_h = cell_w * cols, cell_h * rows
-    img = Image.new("RGB", (img_w, img_h), color="white")
-    draw = ImageDraw.Draw(img)
-    font = ImageFont.load_default()
-
-    # Draw header
-    for i, text in enumerate(["Hour"] + STAGES):
-        x0, y0 = i * cell_w, 0
-        draw.rectangle([x0, y0, x0 + cell_w, y0 + cell_h], outline="black", fill="#D3E4CD")
-        draw.text((x0 + 5, y0 + 10), str(text), font=font, fill="black")
-
-    # Draw cells
-    for r, hour in enumerate(HOURS, start=1):
-        y0 = r * cell_h
-        # Hour column
-        draw.rectangle([0, y0, cell_w, y0 + cell_h], outline="black")
-        draw.text((5, y0 + 10), str(hour), font=font, fill="black")
-        # Schedule cells
-        for c, stage in enumerate(STAGES, start=1):
-            x0 = c * cell_w
-            draw.rectangle([x0, y0, x0 + cell_w, y0 + cell_h], outline="black")
-            text = schedule_df.loc[hour, stage]
-            draw.text((x0 + 5, y0 + 10), text, font=font, fill="black")
+    return fig
 
 
 if __name__ == "__main__":
     schedule_path = Path(__file__).parent.parent / "schedules" / "schedule.csv"
     schedule_df = pd.read_csv(schedule_path)
-    display_schedule_plotly(schedule_df)
-    display_schedule_matplotlib(schedule_df)
+    display_schedule(schedule_df)

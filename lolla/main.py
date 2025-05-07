@@ -16,7 +16,7 @@ from lolla.constraints import (
     check_for_conflicts,
 )
 from lolla import params
-from lolla.visualize import display_schedule_plotly, display_schedule_matplotlib
+from lolla.visualize import display_schedule
 
 
 
@@ -118,3 +118,5 @@ if __name__ == "__main__":
 
     schedule_path = Path(__file__).parent.parent / "schedules" / "schedule.csv"
     schedule_df.to_csv(schedule_path, index=False)
+
+    display_schedule(schedule_df)
