@@ -1,4 +1,5 @@
 import random
+from pathlib import Path
 
 import pandera as pa
 import pandas as pd
@@ -15,12 +16,9 @@ from lolla.constraints import (
     check_for_conflicts,
 )
 from lolla import params
+from lolla.visualize import display_schedule_plotly, display_schedule_matplotlib
 
 
-def main():
-    print("=" * 55 + "\nGenerating Lollapalooza Schedule\n" + "=" * 55)
-    schedule_df = generate_valid_schedule()
-    display_schedule(schedule_df, text="\nGenerated Valid Schedule")
 
 
 def generate_valid_schedule() -> pd.DataFrame:
@@ -65,7 +63,6 @@ def generate_initial_schedule() -> pd.DataFrame:
         },
     )
 
-    display_schedule(schedule_df, text="Initial Schedule")
     return schedule_schema.validate(schedule_df)
 
 
@@ -115,9 +112,9 @@ def swap_conflict_with_random(schedule_df: pd.DataFrame, conflict: ScheduleConfl
     return random_concert
 
 
-def display_schedule(schedule_df: pd.DataFrame, text: str = "Schedule"):
-    print(f"{text}:\n{schedule_df}")
-
-
 if __name__ == "__main__":
-    main()
+    print("=" * 55 + "\nGenerating Lollapalooza Schedule\n" + "=" * 55)
+    schedule_df = generate_valid_schedule()
+
+    schedule_path = Path(__file__).parent.parent / "schedules" / "schedule.csv"
+    schedule_df.to_csv(schedule_path, index=False)
