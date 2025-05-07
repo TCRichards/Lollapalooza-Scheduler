@@ -3,7 +3,7 @@ from typing import Optional
 import pandas as pd
 
 from lolla.constants import NEIGHBORS
-from lolla.wrappers import ScheduleConflict, Concert
+from lolla.wrappers import ScheduleConflict, Concert, ArtistSize
 from lolla import params
 
 
@@ -23,6 +23,8 @@ def check_for_conflicts(
     conflict_predicates = (
         is_stage_booked_consecutively,
         is_neighbor_booked_simultaneously,
+        is_slot_free_and_not_enough_performances_today,
+        is_size_window_violated,
     )
     for pred in conflict_predicates:
         conflict = pred(schedule_df, stage, hour)
@@ -55,19 +57,21 @@ def is_neighbor_booked_simultaneously(
     """
     this_hour_artist = schedule_df.loc[hour, stage]
     if pd.isna(this_hour_artist) or not NEIGHBORS[stage]:
-        return 
+        return
 
     neighboring_artist = schedule_df.loc[hour, NEIGHBORS[stage]]
     if not pd.isna(neighboring_artist):
         return ScheduleConflict(
             concert1=Concert(artist=this_hour_artist, stage=stage, hour=hour),
-            concert2=Concert(artist=neighboring_artist, stage=NEIGHBORS[stage], hour=hour),
-            )
+            concert2=Concert(
+                artist=neighboring_artist, stage=NEIGHBORS[stage], hour=hour
+            ),
+        )
 
 
-def is_slot_free_and_not_enough_performances_today(schedule_df: pd.DataFrame,
-                                                   stage: str,
-                                                   hour: int) -> Optional[ScheduleConflict]:
+def is_slot_free_and_not_enough_performances_today(
+    schedule_df: pd.DataFrame, stage: str, hour: int
+) -> Optional[ScheduleConflict]:
     """If a stage has less than 3 performances in a day, consider an empty slot a conflict."""
     this_hour_artist = schedule_df.loc[hour, stage]
     if not pd.isna(this_hour_artist):
@@ -75,4 +79,40 @@ def is_slot_free_and_not_enough_performances_today(schedule_df: pd.DataFrame,
 
     this_stage_artist_count = schedule_df[stage].count()
     if this_stage_artist_count < params.MIN_ARTISTS_PER_STAGE_PER_DAY:
-        return ScheduleConflict(concert1=Concert(this_hour_artist, stage, hour), concert2=Concert(this_hour_artist, stage, hour))
+        return ScheduleConflict(
+            concert1=Concert(this_hour_artist, stage, hour),
+            concert2=Concert(this_hour_artist, stage, hour),
+        )
+
+
+def is_size_window_violated(
+    schedule_df: pd.DataFrame, stage: str, hour: int
+) -> Optional[ScheduleConflict]:
+    """A basic constraint that checks if the artist size is allowed at this hour.
+    
+    This is used to enforce that artists gradually get bigger as the day goes on.
+    """
+    # map hour -> allowed artist sizes
+    ALLOWED_SIZES = {
+        # 12–2 PM only small
+        **{h: {ArtistSize.SMALL} for h in range(12, 14)},
+        # 2–5 PM: small or medium
+        **{h: {ArtistSize.SMALL, ArtistSize.MEDIUM} for h in range(14, 17)},
+        # 5–7 PM: any size
+        **{h: {ArtistSize.SMALL, ArtistSize.MEDIUM, ArtistSize.LARGE} for h in range(17, 20)},
+        # 7 - 9 PM medium or large
+        **{h: {ArtistSize.MEDIUM, ArtistSize.LARGE} for h in range(20, 22)},
+        # 9 - 11 PM: large only
+        **{h: {ArtistSize.LARGE} for h in range(22, 23)},
+    }
+
+    val = schedule_df.loc[hour, stage]
+    if pd.isna(val):
+        return
+
+    size = ArtistSize[val]
+    if size not in ALLOWED_SIZES[hour]:
+        return ScheduleConflict(
+            Concert(val, stage, hour),
+            Concert(val, stage, hour),
+        )

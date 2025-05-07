@@ -15,24 +15,27 @@ def display_schedule(schedule_df: pd.DataFrame) -> None:
 
 
 def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
+    # Take out nulls, and convert index to 12-hour format
     schedule_df = schedule_df.fillna("")
     schedule_df.index = pd.Series(schedule_df.index).apply(lambda x: f"{x % 12 if x > 12 else x}:00")
+
     fig = go.Figure(
         data=[
             go.Table(
-                domain=dict(x=[0, 1], y=[0, 0.80]),
+                domain=dict(x=[0, 1], y=[0, 0.66]),
                 header=dict(
                     values=["Hour"] + STAGES,
                     fill_color="rgba(211,237,228,0.8)",
                     align="center",
-                    font=dict(color="black", size=16),
+                    font=dict(color="black", size=20),
                 ),
                 cells=dict(
                     values=[schedule_df.index.tolist()]
                     + [schedule_df[col].tolist() for col in STAGES],
                     fill_color="rgba(0,0,0,0)",
                     align="center",
-                    font=dict(color="black", size=12),
+                    font=dict(color="black", size=16),
+                    height=50,
                 ),
             )
         ]
@@ -60,9 +63,7 @@ def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
 
     fig.update_layout(
         autosize=True,
-        margin=dict(l=0, r=0, t=0, b=0),
-        width=850,
-        height=1100,
+        margin=dict(l=0, r=3, t=0, b=0),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
     )
