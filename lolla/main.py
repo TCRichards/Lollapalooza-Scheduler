@@ -20,8 +20,6 @@ from lolla.visualize import display_schedule
 from lolla.artists import get_random_artist_of_size
 
 
-
-
 def generate_valid_schedule() -> pd.DataFrame:
     schedule_df = generate_initial_schedule()
     print(f"Initial schedule:\n{schedule_df}")

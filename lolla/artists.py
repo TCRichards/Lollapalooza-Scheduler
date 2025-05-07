@@ -24,8 +24,11 @@ class Artist:
     size: ArtistSize
     genre: Genre
 
-    def __repr__(self) -> str:
+    def display_name(self) -> str:
         return f"{self.name}<br>Size: {self.size.name.title()}<br>Genre: {self.genre.name.title()}"
+
+    def __repr__(self) -> str:
+        return f"{self.name}: Size={self.size.name.title()}, Genre={self.genre.name.title()}"
     
 
 # Map each size to a list of artists (10 per genre × size)
