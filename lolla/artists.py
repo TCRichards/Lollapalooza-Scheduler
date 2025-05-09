@@ -12,10 +12,9 @@ class ArtistSize(Enum):
 
 class Genre(Enum):
     POP = 1
-    ROCK = 2
-    RAP = 3
-    EDM = 4
-    INDIE = 5
+    RAP = 2
+    EDM = 3
+    INDIE = 4
 
 
 @dataclass

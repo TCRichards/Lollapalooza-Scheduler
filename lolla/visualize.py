@@ -13,23 +13,22 @@ def display_schedule(schedule_df: pd.DataFrame) -> None:
     fig = get_schedule_plotly_figure(schedule_df)
     fig.show()
 
-    
-    
-
 
 def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
     display_df = schedule_df.copy()
-    display_df.index = pd.Series(display_df.index).apply(lambda x: f"{x % 12 if x > 12 else x}:00")
+    display_df.index = pd.Series(display_df.index).apply(
+        lambda x: f"{x % 12 if x > 12 else x}:00"
+    )
 
     # Convert the artist objects to a string representation
     for stage in STAGES:
         display_df[stage] = display_df[stage].apply(artist_to_display)
 
     # Build cell background colors by artist size
-    # Transparent for empty, blue for small, green for medium, red for large
+    # Transparent for empty, blue for small, yellow for medium, red for large
     color_map = {
         ArtistSize.SMALL: "rgba(0,0,255,0.2)",
-        ArtistSize.MEDIUM: "rgba(0,128,0,0.2)",
+        ArtistSize.MEDIUM: "rgba(255,255,102,0.2)",
         ArtistSize.LARGE: "rgba(255,0,0,0.2)",
     }
     cell_colors = []
@@ -75,7 +74,7 @@ def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
     )
-    
+
     return add_background_image(fig)
 
 
@@ -107,15 +106,16 @@ def add_background_image(fig: go.Figure) -> go.Figure:
 def artist_to_display(artist: Artist | NAType) -> str:
     if pd.isna(artist):
         return ""
-    
+
     ICONS = {
         Genre.INDIE: "🎸",
-        Genre.POP:   "🎤",
-        Genre.EDM:   "🎧",
-        Genre.RAP:   "🔥",
+        Genre.POP: "🎤",
+        Genre.EDM: "🎧",
+        Genre.RAP: "🔥",
     }
 
     return f"{ICONS[artist.genre]} {artist.name}<br>{artist.size.name.title()}<br>{artist.genre.name.title()}"
+
 
 if __name__ == "__main__":
     schedule_path = Path(__file__).parent.parent / "schedules" / "schedule.csv"

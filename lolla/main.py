@@ -8,7 +8,6 @@ from lolla.constants import (
     STAGES,
     HOURS,
 )
-from lolla.wrappers import ArtistSize
 from lolla.constraints import (
     get_first_schedule_conflict,
     ScheduleConflict,
@@ -17,7 +16,7 @@ from lolla.constraints import (
 )
 from lolla import params
 from lolla.visualize import display_schedule
-from lolla.artists import get_random_artist_of_size
+from lolla.artists import get_random_artist_of_size, Genre, ArtistSize
 
 
 def generate_valid_schedule() -> pd.DataFrame:
@@ -41,18 +40,39 @@ def generate_initial_schedule() -> pd.DataFrame:
     num_large_artists = int(
         total_slots * params.EVENT_FREQUENCY * params.LARGE_ARTIST_FRQUENCY
     )
+    num_artists_total = num_small_artists + num_medium_artists + num_large_artists
+
     artist_to_num = {
         ArtistSize.SMALL: num_small_artists,
         ArtistSize.MEDIUM: num_medium_artists,
         ArtistSize.LARGE: num_large_artists,
     }
 
+    max_artists_per_genre = num_artists_total // len(Genre) + 1
+    count_per_genre = {Genre: 0 for Genre in Genre}
+
+    artists_used = set()
+
     for artist_size, artist_count in artist_to_num.items():
         while artist_count > 0:
             hour = random.choice(HOURS)
             stage = random.choice(STAGES)
-            schedule_df.loc[hour, stage] = get_random_artist_of_size(artist_size)
-            artist_count -= 1
+
+            # This is super hacky -- the underlying data structure should reflect these limitations
+            # rather than random sampling
+            while True:
+                next_artist = get_random_artist_of_size(artist_size)
+                if next_artist.name in artists_used:
+                    continue
+
+                if count_per_genre[next_artist.genre] >= max_artists_per_genre:
+                    continue
+
+                artists_used.add(next_artist.name)
+                count_per_genre[next_artist.genre] += 1
+                artist_count -= 1
+                schedule_df.loc[hour, stage] = next_artist
+                break
 
     schedule_schema = pa.DataFrameSchema(
         index=pa.Index(
