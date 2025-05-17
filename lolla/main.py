@@ -16,29 +16,40 @@ from lolla.constraints import (
 )
 from lolla import params
 from lolla.visualize import display_schedule
-from lolla.artists import get_random_artist_of_size, Genre, ArtistSize
+from lolla.artists import get_random_artist_of_size, Genre, ArtistSize, Artist
+
+
+class CanNotConvergeError(Exception):
+    ...
 
 
 def generate_valid_schedule() -> pd.DataFrame:
-    schedule_df = generate_initial_schedule()
-    print(f"Initial schedule:\n{schedule_df}")
-    return fix_schedule_conflicts(schedule_df)
+    try:
+        schedule_df = generate_initial_schedule()
+        print(f"Initial schedule:\n{schedule_df}")
+        return fix_schedule_conflicts(schedule_df)
+    except CanNotConvergeError:
+        return generate_valid_schedule()
 
 
 def generate_initial_schedule() -> pd.DataFrame:
     """Generate an initial schedule DataFrame with Artist objects assigned to stages and hours."""
     schedule_df = pd.DataFrame(columns=STAGES, index=HOURS, data={})
     schedule_df.index.name = "hour"
+    
+    event_frequency = random.uniform(
+        params.MIN_EVENT_FREQUENCY, params.MAX_EVENT_FREQUENCY
+    )
 
     total_slots = len(STAGES) * len(HOURS)
     num_small_artists = int(
-        total_slots * params.EVENT_FREQUENCY * params.SMALL_ARTIST_FREQUENCY
+        total_slots * event_frequency * params.SMALL_ARTIST_FREQUENCY
     )
     num_medium_artists = int(
-        total_slots * params.EVENT_FREQUENCY * params.MEDIUM_ARTIST_FREQUENCY
+        total_slots * event_frequency * params.MEDIUM_ARTIST_FREQUENCY
     )
     num_large_artists = int(
-        total_slots * params.EVENT_FREQUENCY * params.LARGE_ARTIST_FRQUENCY
+        total_slots * event_frequency * params.LARGE_ARTIST_FRQUENCY
     )
     num_artists_total = num_small_artists + num_medium_artists + num_large_artists
 
@@ -86,8 +97,9 @@ def generate_initial_schedule() -> pd.DataFrame:
     return schedule_schema.validate(schedule_df)
 
 
-def fix_schedule_conflicts(schedule_df: pd.DataFrame) -> pd.DataFrame:
+def fix_schedule_conflicts(schedule_df: pd.DataFrame, max_iterations: int = 1e3) -> pd.DataFrame:
     """Iteratively fix schedule conflicts as they appear by swapping an event with a conflict with another."""
+    iterations = 0
     while True:
         conflict = get_first_schedule_conflict(schedule_df)
         if conflict is None:
@@ -96,16 +108,21 @@ def fix_schedule_conflicts(schedule_df: pd.DataFrame) -> pd.DataFrame:
         potential_schedule = schedule_df.copy()
         swapped_concert = swap_conflict_with_random(potential_schedule, conflict)
 
-        # If the swap doesn't resolve the conflict, take it with 20% probability
-        # Eventually, this will be the temperature for simmulated annealing the cools during the algorithm
+        # If the swap doesn't resolve the conflict, take it anyway with 10% probability
+        # Eventually, this can correspond be the temperature for simmulated annealing the cools during the algorithm
         conflict_at_swap = check_for_conflicts(
             potential_schedule, swapped_concert.stage, swapped_concert.hour
         )
         conflict_at_original = check_for_conflicts(
             potential_schedule, conflict.concert1.stage, conflict.concert1.hour
         )
+
         if not (conflict_at_swap or conflict_at_original) or (random.random() < 0.1):
             schedule_df = potential_schedule
+        
+        iterations += 1
+        if iterations > max_iterations:
+            raise CanNotConvergeError(f"Unable to converge after {max_iterations} iterations.  Trying again.")
 
     print("No conflicts remaining")
     return schedule_df

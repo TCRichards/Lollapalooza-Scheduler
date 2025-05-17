@@ -4,7 +4,7 @@ import pandas as pd
 from pandas._libs.missing import NAType
 import plotly.graph_objects as go
 
-from lolla.constants import STAGES
+from lolla.constants import STAGES, HOURS
 from lolla.artists import Artist, ArtistSize, Genre
 
 
@@ -48,19 +48,20 @@ def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
     fig = go.Figure(
         data=[
             go.Table(
-                domain=dict(x=[0, 1], y=[0, 0.66]),
+                domain=dict(x=[0, 1], y=[0, 0.77]),
                 header=dict(
                     values=["Time"] + STAGES,
                     fill_color="lightgrey",
                     align="center",
-                    font=dict(color="black", size=20),
+                    font=dict(color="black", size=25),
+                    height=40,
                 ),
                 cells=dict(
                     values=[display_df.index.tolist()]
                     + [display_df[col].tolist() for col in STAGES],
                     fill_color=cell_colors,
                     align="center",
-                    font=dict(color="black", size=16),
+                    font=dict(color="black", size=18),
                     height=50,
                 ),
             )
@@ -110,14 +111,24 @@ def artist_to_display(artist: Artist | NAType) -> str:
     ICONS = {
         Genre.INDIE: "🎸",
         Genre.POP: "🎤",
-        Genre.EDM: "🎧",
+        Genre.EDM: "🎛🔊️",
         Genre.RAP: "🔥",
     }
 
     return f"{ICONS[artist.genre]} {artist.name}<br>{artist.size.name.title()}<br>{artist.genre.name.title()}"
 
 
+def read_schedule_from_csv(file_path: str) -> pd.DataFrame:
+    """Read a schedule from a CSV file."""
+    schedule_df = pd.read_csv(file_path)
+    for col in schedule_df.columns:
+        schedule_df[col] = schedule_df[col].apply(Artist.from_str)
+
+    schedule_df.index = HOURS
+    return schedule_df
+
+
 if __name__ == "__main__":
     schedule_path = Path(__file__).parent.parent / "schedules" / "schedule.csv"
-    schedule_df = pd.read_csv(schedule_path)
+    schedule_df = read_schedule_from_csv(schedule_path)
     display_schedule(schedule_df)

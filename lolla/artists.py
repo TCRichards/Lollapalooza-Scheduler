@@ -3,6 +3,10 @@ from dataclasses import dataclass
 from enum import Enum
 import random
 
+import pandas as pd
+
+from pandas._libs.missing import NAType
+
 
 class ArtistSize(Enum):
     SMALL = 1
@@ -26,6 +30,17 @@ class Artist:
     def __repr__(self) -> str:
         return f"{self.name}<br>Size: {self.size.name.title()}<br>Genre: {self.genre.name.title()}"
     
+    @classmethod
+    def from_str(cls, artist_str: str | NAType) -> Artist | NAType:
+        """Create an Artist instance from a string representation."""
+        if pd.isna(artist_str):
+            return pd.NA
+
+        name, size_str, genre_str = artist_str.split("<br>")
+        size = ArtistSize[size_str.split(": ")[1].upper()]
+        genre = Genre[genre_str.split(": ")[1].upper()]
+        return cls(name=name, size=size, genre=genre)
+    
 
 # Map each size to a list of artists (10 per genre × size)
 size_to_artist_dict: dict[ArtistSize, list[Artist]] = {
@@ -37,36 +52,38 @@ size_to_artist_dict: dict[ArtistSize, list[Artist]] = {
 # === Indie Artists ===
 size_to_artist_dict[ArtistSize.SMALL].extend(
     [
-        Artist("Homescool", ArtistSize.SMALL, Genre.INDIE),
         Artist("Eddie", ArtistSize.SMALL, Genre.INDIE),
+        Artist("Eggy", ArtistSize.SMALL, Genre.INDIE),
         Artist("Courtney Barnett", ArtistSize.SMALL, Genre.INDIE),
         Artist("Parcels", ArtistSize.SMALL, Genre.INDIE),
         Artist("Morgan Wade", ArtistSize.SMALL, Genre.INDIE),
+        Artist("Sincere Engineer", ArtistSize.SMALL, Genre.INDIE),
         Artist("Blondshell", ArtistSize.SMALL, Genre.INDIE),
-        Artist("Sudan Archives", ArtistSize.SMALL, Genre.INDIE),
-        Artist("Beabadoobee", ArtistSize.SMALL, Genre.INDIE),
         Artist("Men I Trust", ArtistSize.SMALL, Genre.INDIE),
         Artist("Sales", ArtistSize.SMALL, Genre.INDIE),
     ]
 )
 size_to_artist_dict[ArtistSize.MEDIUM].extend(
     [
+        Artist("Couch", ArtistSize.MEDIUM, Genre.INDIE),
+        Artist("Lawrence", ArtistSize.MEDIUM, Genre.INDIE),
+        Artist("Beabadoobee", ArtistSize.MEDIUM, Genre.INDIE),
         Artist("Clairo", ArtistSize.MEDIUM, Genre.INDIE),
         Artist("Japanese Breakfast", ArtistSize.MEDIUM, Genre.INDIE),
         Artist("Phoebe Bridgers", ArtistSize.MEDIUM, Genre.INDIE),
         Artist("The 1975", ArtistSize.MEDIUM, Genre.INDIE),
+        Artist("Madison Cunningham", ArtistSize.MEDIUM, Genre.INDIE),
         Artist("Beach House", ArtistSize.MEDIUM, Genre.INDIE),
         Artist("Faye Webster", ArtistSize.MEDIUM, Genre.INDIE),
         Artist("Rex Orange County", ArtistSize.MEDIUM, Genre.INDIE),
-        Artist("Soccer Mommy", ArtistSize.MEDIUM, Genre.INDIE),
-        Artist("Alvvays", ArtistSize.MEDIUM, Genre.INDIE),
-        Artist("Snail Mail", ArtistSize.MEDIUM, Genre.INDIE),
+        Artist("Lizzy McAlpine", ArtistSize.MEDIUM, Genre.INDIE),
     ]
 )
 size_to_artist_dict[ArtistSize.LARGE].extend(
     [
-        Artist("Arcade Fire", ArtistSize.LARGE, Genre.INDIE),
-        Artist("Bon Iver", ArtistSize.LARGE, Genre.INDIE),
+        Artist("Hippo Campus", ArtistSize.MEDIUM, Genre.INDIE),
+        Artist("Hozier", ArtistSize.LARGE, Genre.INDIE),
+        Artist("Noah Kahan", ArtistSize.LARGE, Genre.INDIE),
         Artist("Cage the Elephant", ArtistSize.LARGE, Genre.INDIE),
         Artist("Foster the People", ArtistSize.LARGE, Genre.INDIE),
         Artist("The Killers", ArtistSize.LARGE, Genre.INDIE),
@@ -74,28 +91,26 @@ size_to_artist_dict[ArtistSize.LARGE].extend(
         Artist("Florence + The Machine", ArtistSize.LARGE, Genre.INDIE),
         Artist("LCD Soundsystem", ArtistSize.LARGE, Genre.INDIE),
         Artist("MGMT", ArtistSize.LARGE, Genre.INDIE),
-        Artist("Sufjan Stevens", ArtistSize.LARGE, Genre.INDIE),
     ]
 )
 
 # === Pop Artists ===
 size_to_artist_dict[ArtistSize.SMALL].extend(
     [
-        Artist("mxmtoon", ArtistSize.SMALL, Genre.POP),
-        Artist("Benee", ArtistSize.SMALL, Genre.POP),
-        Artist("Ruel", ArtistSize.SMALL, Genre.POP),
-        Artist("Benson Boone", ArtistSize.SMALL, Genre.POP),
         Artist("Daya", ArtistSize.SMALL, Genre.POP),
         Artist("Charlotte Lawrence", ArtistSize.SMALL, Genre.POP),
         Artist("Audrey Mika", ArtistSize.SMALL, Genre.POP),
         Artist("CVBZ", ArtistSize.SMALL, Genre.POP),
         Artist("Lauren Spencer-Smith", ArtistSize.SMALL, Genre.POP),
-        Artist("Girl in Red", ArtistSize.SMALL, Genre.POP),
+        Artist("Sam Fischer", ArtistSize.SMALL, Genre.POP),
+        Artist("Lyn Lapid", ArtistSize.SMALL, Genre.POP),
     ]
 )
 size_to_artist_dict[ArtistSize.MEDIUM].extend(
     [
-        Artist("Sabrina Carpenter", ArtistSize.MEDIUM, Genre.POP),
+        Artist("Benee", ArtistSize.MEDIUM, Genre.POP),
+        Artist("Ruel", ArtistSize.MEDIUM, Genre.POP),
+        Artist("mxmtoon", ArtistSize.MEDIUM, Genre.POP),
         Artist("Victoria Monét", ArtistSize.MEDIUM, Genre.POP),
         Artist("J Balvin", ArtistSize.MEDIUM, Genre.POP),
         Artist("Ice Spice", ArtistSize.MEDIUM, Genre.POP),
@@ -105,20 +120,25 @@ size_to_artist_dict[ArtistSize.MEDIUM].extend(
         Artist("Julia Michaels", ArtistSize.MEDIUM, Genre.POP),
         Artist("Bazzi", ArtistSize.MEDIUM, Genre.POP),
         Artist("Conan Gray", ArtistSize.MEDIUM, Genre.POP),
+        Artist("Girl in Red", ArtistSize.MEDIUM, Genre.POP),
+        Artist("RAYE", ArtistSize.MEDIUM, Genre.POP),
+        Artist("dodie", ArtistSize.MEDIUM, Genre.POP),
+        Artist("Teddy Swims", ArtistSize.MEDIUM, Genre.POP),
     ]
 )
 size_to_artist_dict[ArtistSize.LARGE].extend(
     [
+        Artist("Sabrina Carpenter", ArtistSize.MEDIUM, Genre.POP),
         Artist("Taylor Swift", ArtistSize.LARGE, Genre.POP),
         Artist("Beyoncé", ArtistSize.LARGE, Genre.POP),
         Artist("Ariana Grande", ArtistSize.LARGE, Genre.POP),
         Artist("Ed Sheeran", ArtistSize.LARGE, Genre.POP),
-        Artist("SZA", ArtistSize.LARGE, Genre.POP),
         Artist("Billie Eilish", ArtistSize.LARGE, Genre.POP),
         Artist("The Weeknd", ArtistSize.LARGE, Genre.POP),
         Artist("Harry Styles", ArtistSize.LARGE, Genre.POP),
         Artist("Rihanna", ArtistSize.LARGE, Genre.POP),
         Artist("Bruno Mars", ArtistSize.LARGE, Genre.POP),
+        Artist("Benson Boone", ArtistSize.SMALL, Genre.POP),
     ]
 )
 
@@ -139,7 +159,6 @@ size_to_artist_dict[ArtistSize.SMALL].extend(
 )
 size_to_artist_dict[ArtistSize.MEDIUM].extend(
     [
-        Artist("Zedd", ArtistSize.MEDIUM, Genre.EDM),
         Artist("Diplo", ArtistSize.MEDIUM, Genre.EDM),
         Artist("Illenium", ArtistSize.MEDIUM, Genre.EDM),
         Artist("Fisher", ArtistSize.MEDIUM, Genre.EDM),
@@ -153,6 +172,7 @@ size_to_artist_dict[ArtistSize.MEDIUM].extend(
 )
 size_to_artist_dict[ArtistSize.LARGE].extend(
     [
+        Artist("Zedd", ArtistSize.MEDIUM, Genre.EDM),
         Artist("Martin Garrix", ArtistSize.LARGE, Genre.EDM),
         Artist("Tiësto", ArtistSize.LARGE, Genre.EDM),
         Artist("David Guetta", ArtistSize.LARGE, Genre.EDM),
@@ -170,8 +190,6 @@ size_to_artist_dict[ArtistSize.LARGE].extend(
 size_to_artist_dict[ArtistSize.SMALL].extend(
     [
         Artist("Cordae", ArtistSize.SMALL, Genre.RAP),
-        Artist("Joey Bada$$", ArtistSize.SMALL, Genre.RAP),
-        Artist("Noname", ArtistSize.SMALL, Genre.RAP),
         Artist("EarthGang", ArtistSize.SMALL, Genre.RAP),
         Artist("Saba", ArtistSize.SMALL, Genre.RAP),
         Artist("Denzel Curry", ArtistSize.SMALL, Genre.RAP),
@@ -193,20 +211,22 @@ size_to_artist_dict[ArtistSize.MEDIUM].extend(
         Artist("Saweetie", ArtistSize.MEDIUM, Genre.RAP),
         Artist("Gunna", ArtistSize.MEDIUM, Genre.RAP),
         Artist("Jack Harlow", ArtistSize.MEDIUM, Genre.RAP),
+        Artist("Joey Bada$$", ArtistSize.SMALL, Genre.RAP),
+        Artist("Noname", ArtistSize.SMALL, Genre.RAP),
     ]
 )
 size_to_artist_dict[ArtistSize.LARGE].extend(
     [
         Artist("Drake", ArtistSize.LARGE, Genre.RAP),
         Artist("Kendrick Lamar", ArtistSize.LARGE, Genre.RAP),
+        Artist("SZA", ArtistSize.LARGE, Genre.POP),
+        Artist("Doechii", ArtistSize.LARGE, Genre.POP),
         Artist("Jay-Z", ArtistSize.LARGE, Genre.RAP),
-        Artist("Eminem", ArtistSize.LARGE, Genre.RAP),
-        Artist("Future × Metro Boomin", ArtistSize.LARGE, Genre.RAP),
+        Artist("Future x Metro Boomin", ArtistSize.LARGE, Genre.RAP),
         Artist("Travis Scott", ArtistSize.LARGE, Genre.RAP),
         Artist("Nicki Minaj", ArtistSize.LARGE, Genre.RAP),
         Artist("Lil Wayne", ArtistSize.LARGE, Genre.RAP),
         Artist("Cardi B", ArtistSize.LARGE, Genre.RAP),
-        Artist("Kanye West", ArtistSize.LARGE, Genre.RAP),
     ]
 )
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from lolla.artists import ArtistSize
 
 class Concert:
+    """A class that represents a concert with a specific Artist, Stage, and Hour."""
     def __init__(self, artist: ArtistSize, stage: str, hour: int):
         self.artist = artist
         self.hour = hour
@@ -20,7 +21,7 @@ class Concert:
 
 
 class ScheduleConflict:
-    """A wrapper that represents two concerts that somehow conflict with each other."""
+    """A class that represents two concerts that somehow conflict with each other."""
 
     def __init__(
         self,
