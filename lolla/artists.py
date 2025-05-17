@@ -211,8 +211,8 @@ size_to_artist_dict[ArtistSize.MEDIUM].extend(
         Artist("Saweetie", ArtistSize.MEDIUM, Genre.RAP),
         Artist("Gunna", ArtistSize.MEDIUM, Genre.RAP),
         Artist("Jack Harlow", ArtistSize.MEDIUM, Genre.RAP),
-        Artist("Joey Bada$$", ArtistSize.SMALL, Genre.RAP),
-        Artist("Noname", ArtistSize.SMALL, Genre.RAP),
+        Artist("Joey Bada$$", ArtistSize.MEDIUM, Genre.RAP),
+        Artist("Noname", ArtistSize.MEDIUM, Genre.RAP),
     ]
 )
 size_to_artist_dict[ArtistSize.LARGE].extend(
