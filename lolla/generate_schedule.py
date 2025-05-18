@@ -16,7 +16,7 @@ from lolla.constraints import (
 )
 from lolla import params
 from lolla.visualize import display_schedule
-from lolla.artists import get_random_artist_of_size, Genre, ArtistSize, Artist
+from lolla.artists import get_random_artist_of_size, Genre, ArtistSize
 
 
 class CanNotConvergeError(Exception):
@@ -24,6 +24,7 @@ class CanNotConvergeError(Exception):
 
 
 def generate_valid_schedule() -> pd.DataFrame:
+    print("=" * 55 + "\nGenerating Lollapalooza Schedule\n" + "=" * 55)
     try:
         schedule_df = generate_initial_schedule()
         print(f"Initial schedule:\n{schedule_df}")
@@ -150,9 +151,7 @@ def swap_conflict_with_random(schedule_df: pd.DataFrame, conflict: ScheduleConfl
 
 
 if __name__ == "__main__":
-    print("=" * 55 + "\nGenerating Lollapalooza Schedule\n" + "=" * 55)
     schedule_df = generate_valid_schedule()
-
     schedule_path = Path(__file__).parent.parent / "schedules" / "schedule.csv"
     schedule_df.to_csv(schedule_path, index=False)
 

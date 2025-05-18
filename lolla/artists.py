@@ -138,7 +138,7 @@ size_to_artist_dict[ArtistSize.LARGE].extend(
         Artist("Harry Styles", ArtistSize.LARGE, Genre.POP),
         Artist("Rihanna", ArtistSize.LARGE, Genre.POP),
         Artist("Bruno Mars", ArtistSize.LARGE, Genre.POP),
-        Artist("Benson Boone", ArtistSize.SMALL, Genre.POP),
+        Artist("Benson Boone", ArtistSize.LARGE, Genre.POP),
     ]
 )
 
@@ -152,13 +152,13 @@ size_to_artist_dict[ArtistSize.SMALL].extend(
         Artist("DJ Seinfeld", ArtistSize.SMALL, Genre.EDM),
         Artist("Lane 8", ArtistSize.SMALL, Genre.EDM),
         Artist("Mura Masa", ArtistSize.SMALL, Genre.EDM),
-        Artist("Louis The Child", ArtistSize.SMALL, Genre.EDM),
         Artist("TOKiMONSTA", ArtistSize.SMALL, Genre.EDM),
         Artist("Shallou", ArtistSize.SMALL, Genre.EDM),
     ]
 )
 size_to_artist_dict[ArtistSize.MEDIUM].extend(
     [
+        Artist("Louis The Child", ArtistSize.MEDIUM, Genre.EDM),
         Artist("Diplo", ArtistSize.MEDIUM, Genre.EDM),
         Artist("Illenium", ArtistSize.MEDIUM, Genre.EDM),
         Artist("Fisher", ArtistSize.MEDIUM, Genre.EDM),
