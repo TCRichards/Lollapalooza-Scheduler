@@ -1,8 +1,10 @@
 import os
 import requests
+import random
+
 from dash import html
 
-def get_youtube_video_id(artist_name: str) -> str:
+def get_youtube_video_id(artist_name: str, results_to_choose: int = 3) -> str:
     """Searches for the most relevant embeddable YouTube video for the given artist."""
     print(f"Searching for YouTube video for artist: {artist_name}")
 
@@ -12,13 +14,12 @@ def get_youtube_video_id(artist_name: str) -> str:
 
     query = f"{artist_name} band music video"
     search_url = "https://www.googleapis.com/youtube/v3/search"
-    video_url = "https://www.googleapis.com/youtube/v3/videos"
 
     search_params = {
         "part": "snippet",
         "q": query,
         "type": "video",
-        "maxResults": 5,
+        "maxResults": results_to_choose,
         "key": api_key,
         "videoEmbeddable": "true",
         "videoSyndicated": "true",
@@ -33,22 +34,8 @@ def get_youtube_video_id(artist_name: str) -> str:
     if not items:
         return None
 
-    video_ids = [item["id"]["videoId"] for item in items]
-
-    # Check embeddability of each video
-    for video_id in video_ids:
-        detail_params = {
-            "part": "status",
-            "id": video_id,
-            "key": api_key,
-        }
-        detail_response = requests.get(video_url, params=detail_params)
-        if detail_response.status_code == 200:
-            details = detail_response.json().get("items", [])
-            if details and details[0]["status"].get("embeddable", False):
-                return video_id
-
-    return None
+    selected_video = random.choice(items)
+    return selected_video["id"]["videoId"]
 
 def create_youtube_embed(video_id: str, width: str = "560", height: str = "315") -> html.Iframe:
     """Creates a Dash HTML iframe component for embedding a YouTube video."""

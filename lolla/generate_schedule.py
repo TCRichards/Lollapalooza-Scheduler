@@ -95,6 +95,7 @@ def generate_initial_schedule() -> pd.DataFrame:
         },
     )
 
+    print("=" * 55 + "\nSuccessfully Generated Schedule!\n" + "=" * 55)
     return schedule_schema.validate(schedule_df)
 
 
