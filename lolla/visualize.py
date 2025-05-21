@@ -1,15 +1,10 @@
 import base64
 from pathlib import Path
 import pandas as pd
-from pandas._libs.missing import NAType
 import plotly.graph_objects as go
 
-import dash
-from dash import dcc, html, Input, Output, State
-import dash_bootstrap_components as dbc
-
 from lolla.constants import STAGES, HOURS
-from lolla.artists import Artist, ArtistSize, Genre
+from lolla.artists import Artist, ArtistSize
 
 
 def display_schedule(schedule_df: pd.DataFrame) -> None:
@@ -36,8 +31,10 @@ def get_schedule_plotly_figure(schedule_df: pd.DataFrame) -> go.Figure:
         ArtistSize.LARGE: "rgba(255,0,0,0.2)",
     }
     cell_colors = []
+
     # index column colors (leave transparent)
     cell_colors.append(["rgba(0,0,0,0)" for _ in schedule_df.index])
+
     # stage columns
     for stage in STAGES:
         col_colors = []
@@ -108,20 +105,6 @@ def add_background_image(fig: go.Figure) -> go.Figure:
     )
 
 
-def artist_to_display(artist: Artist | NAType) -> str:
-    if pd.isna(artist):
-        return ""
-
-    ICONS = {
-        Genre.INDIE: "🎸",
-        Genre.POP: "🎤",
-        Genre.EDM: "🎛🔊️",
-        Genre.RAP: "🔥",
-    }
-
-    return f"{ICONS[artist.genre]} {artist.name}<br>{artist.size.name.title()}<br>{artist.genre.name.title()}"
-
-
 def read_schedule_from_csv(file_path: str) -> pd.DataFrame:
     """Read a schedule from a CSV file."""
     schedule_df = pd.read_csv(file_path)
@@ -139,7 +122,7 @@ def generate_table(schedule_df: pd.DataFrame, highlight_row: int = -1) -> go.Fig
     )
 
     for stage in STAGES:
-        display_df[stage] = display_df[stage].apply(artist_to_display)
+        display_df[stage] = display_df[stage].apply(lambda a: pd.NA if pd.isna(a) else a.to_display())
 
     color_map = {
         ArtistSize.SMALL: "rgba(0,0,255,0.2)",
@@ -196,38 +179,11 @@ def generate_table(schedule_df: pd.DataFrame, highlight_row: int = -1) -> go.Fig
 
 
 if __name__ == "__main__":
+    # Initializes the dash app using 
     schedule_path = Path(__file__).parent.parent / "schedules" / "schedule.csv"
     schedule_df = read_schedule_from_csv(schedule_path)
 
-    app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-    app.layout = html.Div([
-        dcc.Graph(id="schedule-graph", figure=generate_table(schedule_df), style={"height": "100vh"}),
-        dbc.Row([
-            dbc.Col(dbc.Button("⬅️ Previous", id="prev-btn", n_clicks=0, color="primary")),
-            dbc.Col(dbc.Button("➡️ Next", id="next-btn", n_clicks=0, color="success")),
-        ], justify="center", className="mt-2"),
-        dcc.Store(id="highlight-index", data=-1)
-    ])
-
-    @app.callback(
-        Output("highlight-index", "data"),
-        Input("prev-btn", "n_clicks"),
-        Input("next-btn", "n_clicks"),
-        State("highlight-index", "data")
-    )
-    def update_index(prev_clicks, next_clicks, current_idx):
-        changed_id = dash.callback_context.triggered_id
-        if changed_id == "prev-btn":
-            return max(current_idx - 1, 0)
-        elif changed_id == "next-btn":
-            return min(current_idx + 1, len(schedule_df) - 1)
-        return current_idx
-
-    @app.callback(
-        Output("schedule-graph", "figure"),
-        Input("highlight-index", "data")
-    )
-    def update_figure(current_idx):
-        return generate_table(schedule_df, highlight_row=current_idx)
-
+    from lolla.app import create_app
+    app = create_app(schedule_df)
     app.run(debug=True)
+
