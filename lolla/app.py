@@ -1,15 +1,25 @@
 """A Dash app that generates a fake Lolalapooza schedule lineup and visualizes it in a table format."""
 
+import base64
 import dash
 from dash import Input, Output, State, html, dcc, dash_table
 import dash_bootstrap_components as dbc
 import pandas as pd
+from pathlib import Path
 
 from lolla.constants import STAGES
 from lolla.artists import Artist
 from lolla.visualize import get_schedule_datatable_data
 from lolla.youtube import get_youtube_video_id, create_youtube_embed
 from lolla.generate_schedule import generate_valid_schedule
+
+
+def get_background_image_b64() -> str:
+    """Get the background image as a base64 encoded string for CSS use."""
+    background_image_path = Path(__file__).parent.parent / "resources" / "schedule_background.png"
+    with open(background_image_path, "rb") as f:
+        img_bytes = f.read()
+    return base64.b64encode(img_bytes).decode()
 
 
 def serialize_schedule_df(schedule_df: pd.DataFrame) -> list[dict]:
@@ -50,6 +60,9 @@ def deserialize_schedule_df(schedule_data: list[dict]) -> pd.DataFrame:
 def create_app() -> dash.Dash:
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     app.config.suppress_callback_exceptions = True
+
+    # Get background image for schedule viewer
+    bg_image_b64 = get_background_image_b64()
 
     app.layout = html.Div(
         [
@@ -109,7 +122,8 @@ def create_app() -> dash.Dash:
                                     'height': '80vh',
                                     'overflowY': 'auto',
                                     'border': '2px solid #e74c3c',
-                                    'borderRadius': '10px'
+                                    'borderRadius': '10px',
+                                    'backgroundColor': 'rgba(255, 255, 255, 0.9)',  # Semi-transparent background for the table itself
                                 },
                                 style_header={
                                     'backgroundColor': '#e74c3c',
@@ -131,7 +145,7 @@ def create_app() -> dash.Dash:
                                     'height': '30px',
                                 },
                                 style_data={
-                                    'backgroundColor': 'white',
+                                    'backgroundColor': 'rgba(255, 255, 255, 0.95)',  # Semi-transparent white
                                     'color': 'black',
                                 },
                             ),
@@ -179,8 +193,25 @@ def create_app() -> dash.Dash:
                         justify="center",
                         className="mt-2",
                     ),
+                    html.Img(
+                        src=f"data:image/png;base64,{bg_image_b64}",
+                        style={
+                            "position": "absolute",
+                            "top": "0",
+                            "left": "0",
+                            "width": "100%",
+                            "height": "100%",
+                            "zIndex": "-1",  # Behind all other content
+                        },   
+                    ),
                 ],
-                style={"display": "none"},
+                style={
+                    "display": "none",
+                    "minHeight": "100vh",
+                    "backgroundPosition": "center",
+                    "backgroundRepeat": "no-repeat",
+                    "backgroundAttachment": "fixed",
+                },
             ),
             # Data stores
             dcc.Store(id="highlight-index", data=-1),

@@ -15,7 +15,6 @@ from lolla.constraints import (
     check_for_conflicts,
 )
 from lolla import params
-from lolla.visualize import get_schedule_plotly_figure
 from lolla.artists import get_random_artist_of_size, Genre, ArtistSize
 
 
@@ -161,4 +160,5 @@ if __name__ == "__main__":
     schedule_path = Path(__file__).parent.parent / "schedules" / "schedule.csv"
     schedule_df.to_csv(schedule_path, index=False)
 
-    get_schedule_plotly_figure(schedule_df).show()
+    print("Schedule generated and saved to:", schedule_path)
+    print(schedule_df)

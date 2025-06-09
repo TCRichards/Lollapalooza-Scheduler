@@ -67,9 +67,9 @@ def get_schedule_datatable_data(schedule_df: pd.DataFrame, highlight_row: Option
                 artist = schedule_df.iloc[row_idx][col_name]
                 if isinstance(artist, Artist):
                     color_map = {
-                        ArtistSize.SMALL: '#e3f2fd',  # Light blue
-                        ArtistSize.MEDIUM: '#fff3e0',  # Light orange  
-                        ArtistSize.LARGE: '#ffebee',   # Light red
+                        ArtistSize.SMALL: 'rgba(227, 242, 253, 0.8)',  # Light blue with transparency
+                        ArtistSize.MEDIUM: 'rgba(255, 243, 224, 0.8)',  # Light orange with transparency
+                        ArtistSize.LARGE: 'rgba(255, 235, 238, 0.8)',   # Light red with transparency
                     }
                     bg_color = color_map.get(artist.size, 'white')
                     style_data_conditional.append({
@@ -154,72 +154,6 @@ def read_schedule_from_csv(file_path: str) -> pd.DataFrame:
 
     schedule_df.index = HOURS
     return schedule_df
-
-
-def get_schedule_plotly_figure(schedule_df: pd.DataFrame, highlight_row: Optional[int] = None) -> go.Figure:
-    """Create a Plotly table figure for the schedule (for backward compatibility)."""
-    
-    display_df = schedule_df.copy()
-    display_df.index = pd.Series(display_df.index).apply(
-        lambda x: f"{x % 12 if x > 12 else x}:00"
-    )
-
-    for stage in STAGES:
-        display_df[stage] = display_df[stage].apply(lambda a: "" if pd.isna(a) else a.to_display())
-
-    color_map = {
-        ArtistSize.SMALL: "rgba(0,0,255,0.2)",
-        ArtistSize.MEDIUM: "rgba(255,255,102,0.2)",
-        ArtistSize.LARGE: "rgba(255,0,0,0.2)",
-    }
-    base_color = "rgba(0,0,0,0)"
-    highlight_color = "rgba(0,255,0,0.4)"
-
-    # Highlight the index (hour) based on whether it's the active hour
-    cell_colors = []
-    cell_colors.append([
-        highlight_color if i == highlight_row else base_color
-        for i in range(len(schedule_df))
-    ])
-
-    for stage in STAGES:
-        col_colors = []
-        for hour in schedule_df.index:
-            artist = schedule_df.at[hour, stage]
-            bg_color = color_map.get(artist.size, base_color) if isinstance(artist, Artist) else base_color
-            col_colors.append(bg_color)
-        cell_colors.append(col_colors)
-
-    fig = go.Figure(
-        data=[
-            go.Table(
-                domain=dict(x=[0, 1], y=[0, 0.77]),
-                header=dict(
-                    values=["Time"] + STAGES,
-                    fill_color="lightgrey",
-                    align="center",
-                    font=dict(color="black", size=25),
-                    height=40,
-                ),
-                cells=dict(
-                    values=[display_df.index.tolist()] +
-                           [display_df[col].tolist() for col in STAGES],
-                    fill_color=cell_colors,
-                    align="center",
-                    font=dict(color="black", size=18),
-                    height=50,
-                    line=dict(color="white", width=2),
-                ),
-            )
-        ]
-    )
-    fig.update_layout(
-        autosize=True,
-        margin=dict(l=0, r=3, t=0, b=0),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-    )
-    return add_background_image(fig)
 
 
 def add_background_image(fig: go.Figure) -> go.Figure:
