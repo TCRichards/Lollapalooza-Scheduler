@@ -1,14 +1,13 @@
 """A Dash app that generates a fake Lolalapooza schedule lineup and visualizes it in a table format."""
 
 import dash
-from dash import Input, Output, State, html, dcc
+from dash import Input, Output, State, html, dcc, dash_table
 import dash_bootstrap_components as dbc
-from dash_extensions import EventListener
 import pandas as pd
 
-from lolla.constants import STAGES 
+from lolla.constants import STAGES
 from lolla.artists import Artist
-from lolla.visualize import get_schedule_plotly_figure
+from lolla.visualize import get_schedule_datatable_data
 from lolla.youtube import get_youtube_video_id, create_youtube_embed
 from lolla.generate_schedule import generate_valid_schedule
 
@@ -31,7 +30,7 @@ def serialize_schedule_df(schedule_df: pd.DataFrame) -> list[dict]:
 def deserialize_schedule_df(schedule_data: list[dict]) -> pd.DataFrame:
     """Convert serializable format back to DataFrame with Artist objects."""
     from lolla.constants import HOURS
-    
+
     rows = []
     for row_data in schedule_data:
         row = {}
@@ -42,14 +41,15 @@ def deserialize_schedule_df(schedule_data: list[dict]) -> pd.DataFrame:
             else:
                 row[stage] = None
         rows.append(row)
-    
+
     schedule_df = pd.DataFrame(rows, columns=STAGES)
-    schedule_df.index = HOURS[:len(schedule_df)]
+    schedule_df.index = HOURS[: len(schedule_df)]
     return schedule_df
 
 
 def create_app() -> dash.Dash:
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+    app.config.suppress_callback_exceptions = True
 
     app.layout = html.Div(
         [
@@ -65,7 +65,10 @@ def create_app() -> dash.Dash:
                                         html.H1(
                                             "🎵 Lollapalooza Schedule Generator",
                                             className="text-center mb-4",
-                                            style={"color": "#e74c3c", "fontWeight": "bold"}
+                                            style={
+                                                "color": "#e74c3c",
+                                                "fontWeight": "bold",
+                                            },
                                         ),
                                         html.P(
                                             "Welcome! Click the button below to generate a custom Lollapalooza festival schedule.",
@@ -94,17 +97,57 @@ def create_app() -> dash.Dash:
             html.Div(
                 id="schedule-viewer",
                 children=[
-                    EventListener(
-                        dcc.Graph(
-                            id="schedule-graph",
-                            style={"height": "100vh"},
-                        ),
-                        events=[{"event": "click", "props": ["x", "y"]}],
-                        id="graph-listener",
-                        logging=True,
+                    dbc.Container(
+                        [
+                            html.H3("🎪 Lollapalooza Schedule", 
+                                    style={'textAlign': 'center', 'color': '#e74c3c', 'marginBottom': '20px'}),
+                            html.P("Click on any artist to watch their video!", 
+                                   style={'textAlign': 'center', 'color': '#666', 'marginBottom': '20px'}),
+                            dash_table.DataTable(
+                                id="schedule-table",
+                                style_table={
+                                    'height': '80vh',
+                                    'overflowY': 'auto',
+                                    'border': '2px solid #e74c3c',
+                                    'borderRadius': '10px'
+                                },
+                                style_header={
+                                    'backgroundColor': '#e74c3c',
+                                    'color': 'white',
+                                    'fontWeight': 'bold',
+                                    'textAlign': 'center',
+                                    'fontSize': '18px',
+                                    'padding': '12px'
+                                },
+                                style_cell={
+                                    'textAlign': 'center',
+                                    'padding': '15px',
+                                    'fontSize': '14px',
+                                    'fontFamily': 'Arial, sans-serif',
+                                    'border': '1px solid #ddd',
+                                    'minWidth': '120px',
+                                    'maxWidth': '200px',
+                                    'whiteSpace': 'normal',
+                                    'height': '30px',
+                                },
+                                style_data={
+                                    'backgroundColor': 'white',
+                                    'color': 'black',
+                                },
+                            ),
+                        ]
                     ),
                     html.Div(
-                        id="video-player", style={"textAlign": "center", "margin": "20px"}
+                        id="video-player",
+                        style={
+                            "position": "fixed",
+                            "top": "0",
+                            "left": "0",
+                            "width": "100%",
+                            "height": "100%",
+                            "zIndex": "999",
+                            "pointerEvents": "none",  # Allow clicks to pass through when empty
+                        },
                     ),
                     dbc.Row(
                         [
@@ -118,10 +161,10 @@ def create_app() -> dash.Dash:
                             ),
                             dbc.Col(
                                 dbc.Button(
-                                    "➡️ Next Hour", 
-                                    id="next-btn", 
-                                    n_clicks=0, 
-                                    color="success"
+                                    "➡️ Next Hour",
+                                    id="next-btn",
+                                    n_clicks=0,
+                                    color="success",
                                 )
                             ),
                             dbc.Col(
@@ -168,9 +211,9 @@ def create_app() -> dash.Dash:
             schedule_data = serialize_schedule_df(schedule_df)
             return (
                 schedule_data,
-                "schedule", 
+                "schedule",
                 {"display": "none"},  # hide landing page
-                {"display": "block"}  # show schedule viewer
+                {"display": "block"},  # show schedule viewer
             )
         return dash.no_update
 
@@ -188,7 +231,7 @@ def create_app() -> dash.Dash:
     def update_index(prev_clicks, next_clicks, current_idx, schedule_data):
         if not schedule_data:
             return current_idx
-            
+
         schedule_df = deserialize_schedule_df(schedule_data)
         changed_id = dash.callback_context.triggered_id
         if changed_id == "prev-btn":
@@ -198,43 +241,252 @@ def create_app() -> dash.Dash:
         return current_idx
 
     @app.callback(
-        Output("schedule-graph", "figure"),
+        [
+            Output("schedule-table", "data"),
+            Output("schedule-table", "columns"),
+            Output("schedule-table", "style_data_conditional"),
+        ],
         [
             Input("schedule-data", "data"),
             Input("highlight-index", "data"),
         ],
     )
-    def update_schedule_graph(schedule_data, current_idx):
+    def update_schedule_display(schedule_data, current_idx):
         if not schedule_data:
-            return {}
-            
+            return [], [], []
+
         schedule_df = deserialize_schedule_df(schedule_data)
-        return get_schedule_plotly_figure(schedule_df, highlight_row=current_idx)
+        data, columns, style_data_conditional = get_schedule_datatable_data(schedule_df, highlight_row=current_idx)
+        return data, columns, style_data_conditional
 
     @app.callback(
         Output("video-player", "children"),
-        Input("graph-listener", "n_events"),
+        Input("schedule-table", "active_cell"),
         State("schedule-data", "data"),
     )
-    def play_video_on_click(event, schedule_data):
-        if not event or "points" not in event or not event["points"]:
+    def play_video_on_click(active_cell, schedule_data):
+        if not active_cell or not schedule_data:
             return dash.no_update
 
-        point = event["points"][0]
-        row = point["pointIndex"]
-        col = point["curveNumber"]  # 0 = time, 1+ = stages
+        row = active_cell["row"]
+        column_id = active_cell["column_id"]
 
-        if col == 0:
-            return dash.no_update  # they clicked the time index
+        # Ignore clicks on the Time column
+        if column_id == "Time":
+            return dash.no_update
+
+        # Ensure the column is a valid stage
+        if column_id not in STAGES:
+            return dash.no_update
 
         schedule_df = deserialize_schedule_df(schedule_data)
-        stage = STAGES[col - 1]
-        artist = schedule_df.iloc[row][stage]
-        if not isinstance(artist, Artist):
-            return html.Div("No artist scheduled in this slot.")
 
-        video_id = get_youtube_video_id(artist.name)
-        return create_youtube_embed(video_id)
+        # Ensure we have valid indices
+        if row >= len(schedule_df):
+            return dash.no_update
+
+        artist = schedule_df.iloc[row][column_id]
+
+        if not isinstance(artist, Artist):
+            return html.Div()  # Return empty div for empty slots - cleaner UX
+
+        try:
+            video_id = get_youtube_video_id(artist.name)
+            if video_id:
+                return html.Div(
+                    [
+                        # Modal-style backdrop
+                        html.Div(
+                            style={
+                                "position": "fixed",
+                                "top": "0",
+                                "left": "0",
+                                "width": "100%",
+                                "height": "100%",
+                                "backgroundColor": "rgba(0,0,0,0.7)",
+                                "zIndex": "1000",
+                                "display": "flex",
+                                "justifyContent": "center",
+                                "alignItems": "center",
+                                "pointerEvents": "all",  # Enable clicks on modal
+                            },
+                            children=[
+                                html.Div(
+                                    [
+                                        html.Div(
+                                            [
+                                                html.H4(
+                                                    f"🎵 Now Playing: {artist.name}",
+                                                    style={
+                                                        "margin": "0 0 10px 0",
+                                                        "color": "#e74c3c",
+                                                    },
+                                                ),
+                                                html.P(
+                                                    f"{artist.size.name.title()} {artist.genre.name.title()} Artist",
+                                                    style={
+                                                        "margin": "0 0 15px 0",
+                                                        "color": "#666",
+                                                    },
+                                                ),
+                                                html.Div(
+                                                    [
+                                                        dbc.Button(
+                                                            "✕ Close",
+                                                            id="close-video-btn",
+                                                            size="sm",
+                                                            color="secondary",
+                                                            style={
+                                                                "marginRight": "10px"
+                                                            },
+                                                        ),
+                                                        dbc.Button(
+                                                            "🔗 Open in YouTube",
+                                                            href=f"https://www.youtube.com/watch?v={video_id}",
+                                                            target="_blank",
+                                                            size="sm",
+                                                            color="info",
+                                                            external_link=True,
+                                                        ),
+                                                    ],
+                                                    style={"marginBottom": "15px"},
+                                                ),
+                                            ],
+                                            style={"textAlign": "center"},
+                                        ),
+                                        html.Div(
+                                            [
+                                                create_youtube_embed(
+                                                    video_id, width="640", height="360"
+                                                )
+                                            ]
+                                        ),
+                                    ],
+                                    style={
+                                        "backgroundColor": "white",
+                                        "padding": "20px",
+                                        "borderRadius": "15px",
+                                        "boxShadow": "0 8px 32px rgba(0,0,0,0.3)",
+                                        "maxWidth": "700px",
+                                        "maxHeight": "90vh",
+                                        "overflow": "auto",
+                                    },
+                                )
+                            ],
+                        )
+                    ]
+                )
+            else:
+                return html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.H5(
+                                    f"🎵 {artist.name}",
+                                    style={"color": "#e74c3c", "marginBottom": "10px"},
+                                ),
+                                html.P(
+                                    "Sorry, no video available for this artist.",
+                                    style={
+                                        "color": "#666",
+                                        "fontStyle": "italic",
+                                        "marginBottom": "15px",
+                                    },
+                                ),
+                                dbc.Button(
+                                    "✕ Close",
+                                    id="close-video-btn",
+                                    size="sm",
+                                    color="secondary",
+                                ),
+                            ],
+                            style={
+                                "backgroundColor": "white",
+                                "padding": "30px",
+                                "borderRadius": "15px",
+                                "textAlign": "center",
+                                "boxShadow": "0 4px 16px rgba(0,0,0,0.2)",
+                                "margin": "20px auto",
+                                "maxWidth": "400px",
+                                "pointerEvents": "all",  # Enable clicks on error message
+                            },
+                        )
+                    ],
+                    style={
+                        "position": "fixed",
+                        "top": "0",
+                        "left": "0",
+                        "width": "100%",
+                        "height": "100%",
+                        "backgroundColor": "rgba(0,0,0,0.5)",
+                        "zIndex": "1000",
+                        "display": "flex",
+                        "justifyContent": "center",
+                        "alignItems": "center",
+                        "pointerEvents": "all",
+                    },
+                )
+        except Exception as e:
+            print(f"DEBUG: Exception occurred: {e}")  # Debug print
+            return html.Div(
+                [
+                    html.Div(
+                        [
+                            html.H5(
+                                f"🎵 {artist.name}",
+                                style={"color": "#e74c3c", "marginBottom": "10px"},
+                            ),
+                            html.P(
+                                "Unable to load video at this time.",
+                                style={
+                                    "color": "#666",
+                                    "fontStyle": "italic",
+                                    "marginBottom": "15px",
+                                },
+                            ),
+                            dbc.Button(
+                                "✕ Close",
+                                id="close-video-btn",
+                                size="sm",
+                                color="secondary",
+                            ),
+                        ],
+                        style={
+                            "backgroundColor": "white",
+                            "padding": "30px",
+                            "borderRadius": "15px",
+                            "textAlign": "center",
+                            "boxShadow": "0 4px 16px rgba(0,0,0,0.2)",
+                            "margin": "20px auto",
+                            "maxWidth": "400px",
+                            "pointerEvents": "all",
+                        },
+                    )
+                ],
+                style={
+                    "position": "fixed",
+                    "top": "0",
+                    "left": "0",
+                    "width": "100%",
+                    "height": "100%",
+                    "backgroundColor": "rgba(0,0,0,0.5)",
+                    "zIndex": "1000",
+                    "display": "flex",
+                    "justifyContent": "center",
+                    "alignItems": "center",
+                    "pointerEvents": "all",
+                },
+            )
+
+    @app.callback(
+        Output("video-player", "children", allow_duplicate=True),
+        Input("close-video-btn", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def close_video(n_clicks):
+        if n_clicks:
+            return html.Div()  # Clear the video player completely
+        return dash.no_update
 
     return app
 
