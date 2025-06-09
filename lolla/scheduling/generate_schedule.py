@@ -4,18 +4,18 @@ from pathlib import Path
 import pandera as pa
 import pandas as pd
 
-from lolla.constants import (
+from lolla.scheduling.constants import (
     STAGES,
     HOURS,
 )
-from lolla.constraints import (
+from lolla.scheduling.constraints import (
     get_first_schedule_conflict,
     ScheduleConflict,
     Concert,
     check_for_conflicts,
 )
-from lolla import params
-from lolla.artists import get_random_artist_of_size, Genre, ArtistSize
+from lolla.scheduling import params
+from lolla.scheduling.artists import get_random_artist_of_size, Genre, ArtistSize
 
 
 class CanNotConvergeError(Exception):

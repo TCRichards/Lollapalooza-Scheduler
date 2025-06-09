@@ -6,6 +6,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from typing import Optional
 from dash import dash_table, html
+
 from lolla.scheduling.constants import STAGES, HOURS
 from lolla.scheduling.artists import Artist, ArtistSize
 

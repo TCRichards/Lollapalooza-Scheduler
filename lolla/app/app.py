@@ -7,16 +7,16 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from pathlib import Path
 
-from lolla.scheduling.constants import STAGES
-from lolla.scheduling.artists import Artist
 from lolla.app.schedule_table import get_schedule_datatable_data
 from lolla.app.youtube import get_youtube_video_id, create_youtube_embed
+from lolla.scheduling.constants import STAGES
+from lolla.scheduling.artists import Artist
 from lolla.scheduling.generate_schedule import generate_valid_schedule
 
 
 def get_background_image_b64() -> str:
     """Get the background image as a base64 encoded string for CSS use."""
-    background_image_path = Path(__file__).parent.parent / "resources" / "schedule_background.png"
+    background_image_path = Path(__file__).parent.parent.parent / "resources" / "schedule_background.png"
     with open(background_image_path, "rb") as f:
         img_bytes = f.read()
     return base64.b64encode(img_bytes).decode()

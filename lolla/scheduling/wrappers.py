@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from lolla.artists import ArtistSize
+from lolla.scheduling.artists import ArtistSize
 
 class Concert:
     """A class that represents a concert with a specific Artist, Stage, and Hour."""

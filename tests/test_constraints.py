@@ -1,7 +1,7 @@
 import pandas as pd
 
-from lolla.constants import HOURS, ArtistSize
-from lolla.constraints import is_any_stage_booked_consecutively, are_any_neighbors_simultaneous, ScheduleConflict
+from lolla.scheduling.constants import HOURS, ArtistSize
+from lolla.scheduling.constraints import is_any_stage_booked_consecutively, are_any_neighbors_simultaneous, ScheduleConflict
 
 
 

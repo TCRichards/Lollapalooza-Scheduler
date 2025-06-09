@@ -5,8 +5,8 @@ from typing import Optional
 import pandas as pd
 
 from collections import defaultdict
-from lolla.wrappers import ScheduleConflict, Concert, ArtistSize
-from lolla import params
+from lolla.scheduling.wrappers import ScheduleConflict, Concert, ArtistSize
+from lolla.scheduling import params
 
 
 def get_first_schedule_conflict(
