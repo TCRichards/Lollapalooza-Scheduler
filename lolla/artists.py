@@ -1,3 +1,5 @@
+"""Module defining the Artist class, as well as creating a bunch of artists to choose from when generating a schedule."""
+
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
@@ -9,12 +11,21 @@ from pandas._libs.missing import NAType
 
 
 class ArtistSize(Enum):
+    """Artists can be roughly SMALL, MEDIUM, or LARGE.
+    
+    The default point value in the game is determined by the size of the artist.
+    """
     SMALL = 1
     MEDIUM = 2
     LARGE = 3
 
 
 class Genre(Enum):
+    """Enum representing different music genres.
+    
+    In the game, a player selects their favorite genre,
+    and receive more points for attending concerts of that genre.
+    """
     POP = 1
     RAP = 2
     EDM = 3
@@ -40,6 +51,26 @@ class Artist:
         size = ArtistSize[size_str.split(": ")[1].upper()]
         genre = Genre[genre_str.split(": ")[1].upper()]
         return cls(name=name, size=size, genre=genre)
+    
+    def to_dict(self) -> dict:
+        """Convert Artist to dictionary for JSON serialization."""
+        return {
+            "name": self.name,
+            "size": self.size.name,
+            "genre": self.genre.name,
+            "_type": "Artist"
+        }
+    
+    @classmethod
+    def from_dict(cls, data: dict) -> "Artist":
+        """Create Artist from dictionary."""
+        if data is None or not isinstance(data, dict) or data.get("_type") != "Artist":
+            return None
+        return cls(
+            name=data["name"],
+            size=ArtistSize[data["size"]],
+            genre=Genre[data["genre"]]
+        )
     
     def to_display(self) -> str:
         ICONS = {

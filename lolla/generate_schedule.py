@@ -15,15 +15,20 @@ from lolla.constraints import (
     check_for_conflicts,
 )
 from lolla import params
-from lolla.visualize import display_schedule
+from lolla.visualize import get_schedule_plotly_figure
 from lolla.artists import get_random_artist_of_size, Genre, ArtistSize
 
 
 class CanNotConvergeError(Exception):
+    """Exception raised when the schedule generation algorithm cannot converge to a valid schedule after a set number of iterations.
+    
+    This is usually a sign that we're stuck in a local minimum and need to restart the generation process.
+    """
     ...
 
 
 def generate_valid_schedule() -> pd.DataFrame:
+    """Top-level function to generate a Lollapalooza schedule with all constraints satisfied."""
     print("=" * 55 + "\nGenerating Lollapalooza Schedule\n" + "=" * 55)
     try:
         schedule_df = generate_initial_schedule()
@@ -156,4 +161,4 @@ if __name__ == "__main__":
     schedule_path = Path(__file__).parent.parent / "schedules" / "schedule.csv"
     schedule_df.to_csv(schedule_path, index=False)
 
-    display_schedule(schedule_df)
+    get_schedule_plotly_figure(schedule_df).show()

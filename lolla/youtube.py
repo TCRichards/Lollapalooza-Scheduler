@@ -1,3 +1,5 @@
+"""Methods that use the YouTube API to find and embed artist top videos."""
+
 import os
 import requests
 from dash import html
@@ -72,5 +74,3 @@ if __name__ == "__main__":
         print(f"No video found for {artist_name}")
     
     create_youtube_embed(video_id)
-
-    print("Done")

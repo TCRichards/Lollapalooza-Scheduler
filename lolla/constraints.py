@@ -12,6 +12,7 @@ from lolla import params
 def get_first_schedule_conflict(
     schedule_df: pd.DataFrame,
 ) -> Optional[ScheduleConflict]:
+    """Returns the first ScheduleConflict (arbitrary order), or None if no conflicts are found."""
     for stage in schedule_df.columns:
         for hour in schedule_df.index:
             conflict = check_for_conflicts(schedule_df, stage, hour)
@@ -22,6 +23,7 @@ def get_first_schedule_conflict(
 def check_for_conflicts(
     schedule_df: pd.DataFrame, stage: str, hour: int
 ) -> Optional[ScheduleConflict]:
+    """Checks for conflicts in the schedule for a given stage and hour."""
     conflict_predicates = (
         is_stage_booked_consecutively,
         is_neighbor_booked_simultaneously,
@@ -53,9 +55,9 @@ def is_stage_booked_consecutively(
 def is_neighbor_booked_simultaneously(
     schedule_df: pd.DataFrame, stage: str, hour: int
 ) -> Optional[ScheduleConflict]:
-    """Returns: A tuple of idenfitiers for the first cells that were caught to
-
-    Each identifier is an hour and stage
+    """Checks if a stage and its neighbor are booked at the same time.
+    
+    Only certain stages have neighbors, so this is a sparse check.
     """
     # Represents stages that can't play at the same time
     NEIGHBORS = defaultdict(lambda: None, {
