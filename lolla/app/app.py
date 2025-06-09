@@ -1,68 +1,25 @@
 """A Dash app that generates a fake Lolalapooza schedule lineup and visualizes it in a table format."""
 
-import base64
 import dash
 from dash import Input, Output, State, html, dcc, dash_table
 import dash_bootstrap_components as dbc
-import pandas as pd
-from pathlib import Path
 
 from lolla.app.schedule_table import get_schedule_datatable_data
 from lolla.app.youtube import get_youtube_video_id, create_youtube_embed
+from lolla.app.utils import (
+    serialize_schedule_df,
+    deserialize_schedule_df,
+    get_schedule_background_image_b64,
+    get_landing_page_background_image_b64,
+)
 from lolla.scheduling.constants import STAGES
 from lolla.scheduling.artists import Artist
 from lolla.scheduling.generate_schedule import generate_valid_schedule
 
 
-def get_background_image_b64() -> str:
-    """Get the background image as a base64 encoded string for CSS use."""
-    background_image_path = Path(__file__).parent.parent.parent / "resources" / "schedule_background.png"
-    with open(background_image_path, "rb") as f:
-        img_bytes = f.read()
-    return base64.b64encode(img_bytes).decode()
-
-
-def serialize_schedule_df(schedule_df: pd.DataFrame) -> list[dict]:
-    """Convert DataFrame with Artist objects to serializable format."""
-    data = []
-    for _, row in schedule_df.iterrows():
-        row_data = {}
-        for stage in STAGES:
-            artist = row[stage]
-            if isinstance(artist, Artist):
-                row_data[stage] = artist.to_dict()
-            else:
-                row_data[stage] = None
-        data.append(row_data)
-    return data
-
-
-def deserialize_schedule_df(schedule_data: list[dict]) -> pd.DataFrame:
-    """Convert serializable format back to DataFrame with Artist objects."""
-    from lolla.scheduling.constants import HOURS
-
-    rows = []
-    for row_data in schedule_data:
-        row = {}
-        for stage in STAGES:
-            artist_data = row_data.get(stage)
-            if artist_data:
-                row[stage] = Artist.from_dict(artist_data)
-            else:
-                row[stage] = None
-        rows.append(row)
-
-    schedule_df = pd.DataFrame(rows, columns=STAGES)
-    schedule_df.index = HOURS[: len(schedule_df)]
-    return schedule_df
-
-
 def create_app() -> dash.Dash:
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     app.config.suppress_callback_exceptions = True
-
-    # Get background image for schedule viewer
-    bg_image_b64 = get_background_image_b64()
 
     app.layout = html.Div(
         [
@@ -76,7 +33,7 @@ def create_app() -> dash.Dash:
                                 dbc.Col(
                                     [
                                         html.H1(
-                                            "🎵 Lollapalooza Schedule Generator",
+                                            "🎵 Lollapalooza The Game",
                                             className="text-center mb-4",
                                             style={
                                                 "color": "#e74c3c",
@@ -88,7 +45,7 @@ def create_app() -> dash.Dash:
                                             className="text-center lead mb-4",
                                         ),
                                         dbc.Button(
-                                            "🎪 Generate Schedule",
+                                            "🎪 Start the Game",
                                             id="start-btn",
                                             n_clicks=0,
                                             color="primary",
@@ -101,55 +58,76 @@ def create_app() -> dash.Dash:
                                 justify="center",
                             )
                         ],
-                        className="mt-5",
+                        style={
+                            "backgroundColor": "white",
+                            "padding": "40px",
+                            "borderRadius": "15px",
+                            "boxShadow": "0 8px 32px rgba(0,0,0,0.1)",
+                            "margin": "20vh auto",
+                            "maxWidth": "600px",
+                        },
                     )
                 ],
-                style={"minHeight": "100vh", "backgroundColor": "#f8f9fa"},
+                style={
+                    "minHeight": "100vh",
+                    "backgroundImage": f"url('data:image/png;base64,{get_landing_page_background_image_b64()}')",
+                    "backgroundSize": "cover",
+                    "backgroundPosition": "center",
+                    "backgroundRepeat": "no-repeat",
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "center",
+                },
             ),
+
             # Schedule viewer components (initially hidden)
             html.Div(
                 id="schedule-viewer",
                 children=[
-                    dbc.Container(
-                        [
-                            html.H3("🎪 Lollapalooza Schedule", 
-                                    style={'textAlign': 'center', 'color': '#e74c3c', 'marginBottom': '20px'}),
-                            html.P("Click on any artist to watch their video!", 
-                                   style={'textAlign': 'center', 'color': '#666', 'marginBottom': '20px'}),
-                            dash_table.DataTable(
-                                id="schedule-table",
-                                style_table={
-                                    'height': '80vh',
-                                    'overflowY': 'auto',
-                                    'border': '2px solid #e74c3c',
-                                    'borderRadius': '10px',
-                                    'backgroundColor': 'rgba(255, 255, 255, 0.9)',  # Semi-transparent background for the table itself
-                                },
-                                style_header={
-                                    'backgroundColor': '#e74c3c',
-                                    'color': 'white',
-                                    'fontWeight': 'bold',
-                                    'textAlign': 'center',
-                                    'fontSize': '18px',
-                                    'padding': '12px'
-                                },
-                                style_cell={
-                                    'textAlign': 'center',
-                                    'padding': '15px',
-                                    'fontSize': '14px',
-                                    'fontFamily': 'Arial, sans-serif',
-                                    'border': '1px solid #ddd',
-                                    'minWidth': '120px',
-                                    'maxWidth': '200px',
-                                    'whiteSpace': 'normal',
-                                    'height': '30px',
-                                },
-                                style_data={
-                                    'backgroundColor': 'rgba(255, 255, 255, 0.95)',  # Semi-transparent white
-                                    'color': 'black',
-                                },
-                            ),
-                        ]
+                    html.P(
+                        "Click on any artist to watch their video!",
+                        style={
+                            "textAlign": "center",
+                            "color": "#666",
+                            "marginBottom": "20px",
+                        },
+                    ),
+                    dash_table.DataTable(
+                        id="schedule-table",
+                        style_table={
+                            "height": "90vh",
+                            "width": "100%",  # Take full horizontal space
+                            "overflowY": "auto",
+                            "borderRadius": "10px",
+                            "backgroundColor": "transparent",  # Fully transparent background
+                            "paddingTop": "20vh",
+                        },
+                        style_header={
+                            "backgroundColor": "#000000",
+                            "color": "white",
+                            "fontWeight": "bold",
+                            "textAlign": "center",
+                            "fontSize": "18px",
+                            "padding": "12px",
+                            "height": "auto",
+                        },
+                        style_cell={
+                            "textAlign": "center",
+                            "padding": "20px",  # Increased padding for more vertical space
+                            "fontSize": "16px",  # Slightly larger font
+                            "fontFamily": "Arial, sans-serif",
+                            "whiteSpace": "normal",
+                            "height": "auto",  # Allow cells to expand vertically
+                            "minHeight": "80px",  # Larger minimum height for better vertical space usage
+                            "width": f"{100 / 8}vw",  # 8 columns -- take up 100% of width
+                            "lineHeight": "1.4",  # Better line spacing
+                        },
+                        style_data={
+                            "backgroundColor": "transparent",  # Fully transparent background
+                            "color": "black",
+                            "height": "auto",  # Allow data cells to expand
+                            "fontWeight": "500",  # Slightly bolder text for better readability
+                        },
                     ),
                     html.Div(
                         id="video-player",
@@ -194,7 +172,7 @@ def create_app() -> dash.Dash:
                         className="mt-2",
                     ),
                     html.Img(
-                        src=f"data:image/png;base64,{bg_image_b64}",
+                        src=f"data:image/png;base64,{get_schedule_background_image_b64()}",
                         style={
                             "position": "absolute",
                             "top": "0",
@@ -202,7 +180,7 @@ def create_app() -> dash.Dash:
                             "width": "100%",
                             "height": "100%",
                             "zIndex": "-1",  # Behind all other content
-                        },   
+                        },
                     ),
                 ],
                 style={
@@ -287,7 +265,9 @@ def create_app() -> dash.Dash:
             return [], [], []
 
         schedule_df = deserialize_schedule_df(schedule_data)
-        data, columns, style_data_conditional = get_schedule_datatable_data(schedule_df, highlight_row=current_idx)
+        data, columns, style_data_conditional = get_schedule_datatable_data(
+            schedule_df, highlight_row=current_idx
+        )
         return data, columns, style_data_conditional
 
     @app.callback(
@@ -457,8 +437,7 @@ def create_app() -> dash.Dash:
                         "pointerEvents": "all",
                     },
                 )
-        except Exception as e:
-            print(f"DEBUG: Exception occurred: {e}")  # Debug print
+        except Exception:
             return html.Div(
                 [
                     html.Div(

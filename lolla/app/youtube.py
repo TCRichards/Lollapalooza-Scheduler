@@ -20,7 +20,7 @@ def get_youtube_video_id(artist_name: str) -> str:
         "part": "snippet",
         "q": query,
         "type": "video",
-        "maxResults": 5,
+        "maxResults": 10,
         "key": api_key,
         "videoEmbeddable": "true",
         "videoSyndicated": "true",
@@ -34,6 +34,13 @@ def get_youtube_video_id(artist_name: str) -> str:
     items = response.json().get("items", [])
     if not items:
         return None
+
+    # Exclude live concerts or features
+    exclude_keywords = ["live", "concert", "feat", "ft." "featuring"]
+    items = [
+        item for item in items
+        if not any(keyword in item["snippet"]["title"].lower() for keyword in exclude_keywords)
+    ]
 
     video_ids = [item["id"]["videoId"] for item in items]
 
@@ -50,6 +57,7 @@ def get_youtube_video_id(artist_name: str) -> str:
             if details and details[0]["status"].get("embeddable", False):
                 return video_id
 
+    # No embeddable video found
     return None
 
 def create_youtube_embed(video_id: str, width: str = "560", height: str = "315") -> html.Iframe:
@@ -72,5 +80,5 @@ if __name__ == "__main__":
         print(f"Video ID for {artist_name}: {video_id}")
     else:
         print(f"No video found for {artist_name}")
-    
+
     create_youtube_embed(video_id)
