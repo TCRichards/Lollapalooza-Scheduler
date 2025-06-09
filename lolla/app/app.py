@@ -20,6 +20,7 @@ from lolla.scheduling.generate_schedule import generate_valid_schedule
 def create_app() -> dash.Dash:
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
     app.config.suppress_callback_exceptions = True
+    app.title = "🎪 Lollapalooza Game"
 
     app.layout = html.Div(
         [
