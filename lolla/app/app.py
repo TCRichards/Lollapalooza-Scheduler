@@ -33,15 +33,15 @@ def create_app() -> dash.Dash:
                                 dbc.Col(
                                     [
                                         html.H1(
-                                            "🎵 Lollapalooza The Game",
+                                            "🎵 Lollapalooza The Game 🎵",
                                             className="text-center mb-4",
                                             style={
-                                                "color": "#e74c3c",
+                                                "color": "#000000",
                                                 "fontWeight": "bold",
                                             },
                                         ),
                                         html.P(
-                                            "Welcome! Click the button below to generate a custom Lollapalooza festival schedule.",
+                                            "Welcome! Click the button below to generate a festival schedule and start the game.",
                                             className="text-center lead mb-4",
                                         ),
                                         dbc.Button(
