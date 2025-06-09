@@ -79,7 +79,6 @@ def create_app() -> dash.Dash:
                     "justifyContent": "center",
                 },
             ),
-
             # Schedule viewer components (initially hidden)
             html.Div(
                 id="schedule-viewer",
@@ -100,7 +99,6 @@ def create_app() -> dash.Dash:
                             "overflowY": "auto",
                             "borderRadius": "10px",
                             "backgroundColor": "transparent",  # Fully transparent background
-                            "paddingTop": "20vh",
                         },
                         style_header={
                             "backgroundColor": "#000000",
@@ -113,10 +111,10 @@ def create_app() -> dash.Dash:
                         },
                         style_cell={
                             "textAlign": "center",
-                            "padding": "20px",  # Increased padding for more vertical space
+                            "padding": "12px",  # Increased padding for more vertical space
                             "fontSize": "16px",  # Slightly larger font
                             "fontFamily": "Arial, sans-serif",
-                            "whiteSpace": "normal",
+                            "whiteSpace": "pre-line", # Enable line breaks for artist names
                             "height": "auto",  # Allow cells to expand vertically
                             "minHeight": "80px",  # Larger minimum height for better vertical space usage
                             "width": f"{100 / 8}vw",  # 8 columns -- take up 100% of width

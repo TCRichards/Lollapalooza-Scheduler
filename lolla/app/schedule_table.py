@@ -20,7 +20,7 @@ def get_schedule_datatable_data(schedule_df: pd.DataFrame, highlight_row: Option
     # Convert artists to display format
     for stage in STAGES:
         display_df[stage] = display_df[stage].apply(
-            lambda a: "" if pd.isna(a) else a.name  # Just show artist name for cleaner table
+            lambda a: "" if pd.isna(a) else a.to_table_display()  # Show full artist display with genre icons and newlines
         )
 
     # Reset index to make Time a regular column

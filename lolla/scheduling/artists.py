@@ -81,6 +81,17 @@ class Artist:
         }
 
         return f"{ICONS[self.genre]} {self.name}<br>{self.size.name.title()}<br>{self.genre.name.title()}"
+    
+    def to_table_display(self) -> str:
+        """Display format specifically for DataTable (uses newlines instead of <br>)."""
+        ICONS = {
+            Genre.INDIE: "🎸",
+            Genre.POP: "🎤",
+            Genre.EDM: "🎛🔊️",
+            Genre.RAP: "🔥",
+        }
+
+        return f"{ICONS[self.genre]} {self.name}\n{self.size.name.title()}\n{self.genre.name.title()}"
 
 # Map each size to a list of artists (10 per genre × size)
 size_to_artist_dict: dict[ArtistSize, list[Artist]] = {
