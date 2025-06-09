@@ -8,8 +8,14 @@ __pycache__/
 
 .DS_Store
 
+# I also save some documentation about the game as excalidraw files that I'm not ready to commit
+*.excalidraw
+
+.vscode
+
 # Distribution / packaging
 .Python
+
 build/
 develop-eggs/
 dist/
