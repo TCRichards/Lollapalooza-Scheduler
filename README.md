@@ -26,6 +26,7 @@ The project is split into two main modules:
   - Data serialization for web display
   - YouTube integration and visual styling
 
+
 ## Setup
 
 This project uses [Poetry](https://python-poetry.org/) for dependency management:
@@ -46,3 +47,13 @@ python -m lolla.app.app
 
 Launch the app and click "Generate New Schedule" to create a fresh festival lineup. Each artist is displayed with their genre icon, name, size tier, and genre classification. Navigate through different time slots to see the full festival experience!
 
+1. Start by launching the app:
+
+![Landing Page](./resources/landing_page.png)
+
+2. Click the button to generate a festival schedule and start the game:
+
+![Schedule](./resources/schedule.png)
+
+3. Click on an artist to play a random song from their YouTube channel:
+![Artist Song](./resources/youtube_embed.png)
