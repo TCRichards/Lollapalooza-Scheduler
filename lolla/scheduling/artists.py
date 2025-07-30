@@ -117,6 +117,7 @@ size_to_artist_dict[ArtistSize.SMALL].extend(
 size_to_artist_dict[ArtistSize.MEDIUM].extend(
     [
         Artist("Couch", ArtistSize.MEDIUM, Genre.INDIE),
+        Artist("Carset Headrest", ArtistSize.MEDIUM, Genre.INDIE),
         Artist("Lawrence", ArtistSize.MEDIUM, Genre.INDIE),
         Artist("Beabadoobee", ArtistSize.MEDIUM, Genre.INDIE),
         Artist("Clairo", ArtistSize.MEDIUM, Genre.INDIE),
@@ -144,6 +145,7 @@ size_to_artist_dict[ArtistSize.LARGE].extend(
         Artist("Foster the People", ArtistSize.LARGE, Genre.INDIE),
         Artist("The Killers", ArtistSize.LARGE, Genre.INDIE),
         Artist("Tame Impala", ArtistSize.LARGE, Genre.INDIE),
+        Artist("Plain White Ts", ArtistSize.LARGE, Genre.INDIE),
         Artist("Florence + The Machine", ArtistSize.LARGE, Genre.INDIE),
         Artist("LCD Soundsystem", ArtistSize.LARGE, Genre.INDIE),
         Artist("MGMT", ArtistSize.LARGE, Genre.INDIE),
@@ -216,7 +218,6 @@ size_to_artist_dict[ArtistSize.SMALL].extend(
 )
 size_to_artist_dict[ArtistSize.MEDIUM].extend(
     [
-        Artist("Dom Dolla", ArtistSize.MEDIUM, Genre.EDM),
         Artist("Louis The Child", ArtistSize.MEDIUM, Genre.EDM),
         Artist("Diplo", ArtistSize.MEDIUM, Genre.EDM),
         Artist("Illenium", ArtistSize.MEDIUM, Genre.EDM),
@@ -232,6 +233,7 @@ size_to_artist_dict[ArtistSize.MEDIUM].extend(
 )
 size_to_artist_dict[ArtistSize.LARGE].extend(
     [
+        Artist("Dom Dolla", ArtistSize.MEDIUM, Genre.EDM),
         Artist("Zedd", ArtistSize.LARGE, Genre.EDM),
         Artist("Martin Garrix", ArtistSize.LARGE, Genre.EDM),
         Artist("Tiësto", ArtistSize.LARGE, Genre.EDM),
@@ -244,6 +246,7 @@ size_to_artist_dict[ArtistSize.LARGE].extend(
         Artist("Steve Aoki", ArtistSize.LARGE, Genre.EDM),
         Artist("Eric Prydz", ArtistSize.LARGE, Genre.EDM),
         Artist("ODESZA", ArtistSize.LARGE, Genre.EDM),
+        Artist("RÜFÜS DU SOL", ArtistSize.LARGE, Genre.EDM),
     ]
 )
 
@@ -271,16 +274,18 @@ size_to_artist_dict[ArtistSize.MEDIUM].extend(
         Artist("21 Savage", ArtistSize.MEDIUM, Genre.RAP),
         Artist("Saweetie", ArtistSize.MEDIUM, Genre.RAP),
         Artist("Gunna", ArtistSize.MEDIUM, Genre.RAP),
+        Artist("JID", ArtistSize.MEDIUM, Genre.RAP),
         Artist("Jack Harlow", ArtistSize.MEDIUM, Genre.RAP),
         Artist("Joey Bada$$", ArtistSize.MEDIUM, Genre.RAP),
         Artist("Noname", ArtistSize.MEDIUM, Genre.RAP),
+        Artist("Sno Alegra", ArtistSize.MEDIUM, Genre.RAP),
     ]
 )
 size_to_artist_dict[ArtistSize.LARGE].extend(
     [
         Artist("Kendrick Lamar", ArtistSize.LARGE, Genre.RAP),
-        Artist("SZA", ArtistSize.LARGE, Genre.POP),
-        Artist("Doechii", ArtistSize.LARGE, Genre.POP),
+        Artist("SZA", ArtistSize.LARGE, Genre.RAP),
+        Artist("Doechii", ArtistSize.LARGE, Genre.RAP),
         Artist("Jay-Z", ArtistSize.LARGE, Genre.RAP),
         Artist("Future x Metro Boomin", ArtistSize.LARGE, Genre.RAP),
         Artist("J Cole", ArtistSize.LARGE, Genre.RAP),
@@ -289,6 +294,7 @@ size_to_artist_dict[ArtistSize.LARGE].extend(
         Artist("Nicki Minaj", ArtistSize.LARGE, Genre.RAP),
         Artist("Lil Wayne", ArtistSize.LARGE, Genre.RAP),
         Artist("Cardi B", ArtistSize.LARGE, Genre.RAP),
+        Artist("Chance the Rapper", ArtistSize.LARGE, Genre.RAP),
     ]
 )
 
@@ -296,6 +302,12 @@ size_to_artist_dict[ArtistSize.LARGE].extend(
 def get_random_artist_of_size(size: ArtistSize) -> Artist:
     """Return a random Artist instance matching the given size."""
     return random.choice(size_to_artist_dict[size])
+
+def get_random_artist_of_size_and_genre(size: ArtistSize, genre: Genre) -> Artist:
+    artists_of_size = size_to_artist_dict[size]
+    artists_of_size_and_genre = [a for a in artists_of_size if a.genre == genre]
+    return random.choice(artists_of_size_and_genre)
+    
 
 
 if __name__ == "__main__":
