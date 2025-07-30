@@ -2,6 +2,7 @@
 
 import os
 import requests
+import random
 from dash import html
 
 def get_youtube_video_id(artist_name: str) -> str:
@@ -41,8 +42,10 @@ def get_youtube_video_id(artist_name: str) -> str:
         item for item in items
         if not any(keyword in item["snippet"]["title"].lower() for keyword in exclude_keywords)
     ]
-
     video_ids = [item["id"]["videoId"] for item in items]
+
+    # Shuffle the remaining results to randomize selection
+    video_ids = random.sample(video_ids, len(video_ids))
 
     # Check embeddability of each video
     for video_id in video_ids:

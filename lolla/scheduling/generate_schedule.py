@@ -15,12 +15,12 @@ from lolla.scheduling.constraints import (
     check_for_conflicts,
 )
 from lolla.scheduling import params
-from lolla.scheduling.artists import get_random_artist_of_size, Genre, ArtistSize
+from lolla.scheduling.artists import get_random_artist_of_size_and_genre, Genre, ArtistSize, Artist, Genre
 
 
 class CanNotConvergeError(Exception):
     """Exception raised when the schedule generation algorithm cannot converge to a valid schedule after a set number of iterations.
-    
+
     This is usually a sign that we're stuck in a local minimum and need to restart the generation process.
     """
     ...
@@ -37,58 +37,18 @@ def generate_valid_schedule() -> pd.DataFrame:
         return generate_valid_schedule()
 
 
+
+
 def generate_initial_schedule() -> pd.DataFrame:
     """Generate an initial schedule DataFrame with Artist objects assigned to stages and hours."""
     schedule_df = pd.DataFrame(columns=STAGES, index=HOURS, data={})
     schedule_df.index.name = "hour"
-    
-    event_frequency = random.uniform(
-        params.MIN_EVENT_FREQUENCY, params.MAX_EVENT_FREQUENCY
-    )
 
-    total_slots = len(STAGES) * len(HOURS)
-    num_small_artists = int(
-        total_slots * event_frequency * params.SMALL_ARTIST_FREQUENCY
-    )
-    num_medium_artists = int(
-        total_slots * event_frequency * params.MEDIUM_ARTIST_FREQUENCY
-    )
-    num_large_artists = int(
-        total_slots * event_frequency * params.LARGE_ARTIST_FRQUENCY
-    )
-    num_artists_total = num_small_artists + num_medium_artists + num_large_artists
-
-    artist_to_num = {
-        ArtistSize.SMALL: num_small_artists,
-        ArtistSize.MEDIUM: num_medium_artists,
-        ArtistSize.LARGE: num_large_artists,
-    }
-
-    max_artists_per_genre = num_artists_total // len(Genre) + 1
-    count_per_genre = {Genre: 0 for Genre in Genre}
-
-    artists_used = set()
-
-    for artist_size, artist_count in artist_to_num.items():
-        while artist_count > 0:
-            hour = random.choice(HOURS)
-            stage = random.choice(STAGES)
-
-            # This is super hacky -- the underlying data structure should reflect these limitations
-            # rather than random sampling
-            while True:
-                next_artist = get_random_artist_of_size(artist_size)
-                if next_artist.name in artists_used:
-                    continue
-
-                if count_per_genre[next_artist.genre] >= max_artists_per_genre:
-                    continue
-
-                artists_used.add(next_artist.name)
-                count_per_genre[next_artist.genre] += 1
-                artist_count -= 1
-                schedule_df.loc[hour, stage] = next_artist
-                break
+    unassigned_artists = generate_artist_pool()
+    while unassigned_artists:
+        hour = random.choice(HOURS)
+        stage = random.choice(STAGES)
+        schedule_df.loc[hour, stage] = unassigned_artists.pop()
 
     schedule_schema = pa.DataFrameSchema(
         index=pa.Index(
@@ -101,6 +61,39 @@ def generate_initial_schedule() -> pd.DataFrame:
 
     print("=" * 55 + "\nSuccessfully Generated Schedule!\n" + "=" * 55)
     return schedule_schema.validate(schedule_df)
+
+
+def generate_artist_pool() -> list[Artist]:
+    """Generates a set of Artists that will be placed on the schedule, satisfying constraints about size and genre."""
+    total_slots = len(STAGES) * len(HOURS)
+    event_frequency = random.uniform(
+        params.MIN_EVENT_FREQUENCY, params.MAX_EVENT_FREQUENCY
+    )
+    num_small_artists = int(
+        total_slots * event_frequency * params.SMALL_ARTIST_FREQUENCY
+    )
+    num_medium_artists = int(
+        total_slots * event_frequency * params.MEDIUM_ARTIST_FREQUENCY
+    )
+    num_large_artists = int(
+        total_slots * event_frequency * params.LARGE_ARTIST_FRQUENCY
+    )
+
+    artist_size_to_count = {
+        ArtistSize.SMALL: num_small_artists,
+        ArtistSize.MEDIUM: num_medium_artists,
+        ArtistSize.LARGE: num_large_artists,
+    }
+
+    artist_pool = []
+    for size in ArtistSize:
+        for genre in Genre:
+            num_artists_per_size_genre = artist_size_to_count[size] // len(Genre) + 1
+            for _ in range(num_artists_per_size_genre):
+                artist_pool.append(get_random_artist_of_size_and_genre(size, genre))
+
+    return artist_pool
+
 
 
 def fix_schedule_conflicts(schedule_df: pd.DataFrame, max_iterations: int = 1e3) -> pd.DataFrame:
@@ -125,7 +118,7 @@ def fix_schedule_conflicts(schedule_df: pd.DataFrame, max_iterations: int = 1e3)
 
         if not (conflict_at_swap or conflict_at_original) or (random.random() < 0.1):
             schedule_df = potential_schedule
-        
+
         iterations += 1
         if iterations > max_iterations:
             raise CanNotConvergeError(f"Unable to converge after {max_iterations} iterations.  Trying again.")
@@ -157,7 +150,7 @@ def swap_conflict_with_random(schedule_df: pd.DataFrame, conflict: ScheduleConfl
 
 if __name__ == "__main__":
     schedule_df = generate_valid_schedule()
-    schedule_path = Path(__file__).parent.parent / "schedules" / "schedule.csv"
+    schedule_path = Path(__file__).parent.parent.parent / "schedules" / "schedule.csv"
     schedule_df.to_csv(schedule_path, index=False)
 
     print("Schedule generated and saved to:", schedule_path)
